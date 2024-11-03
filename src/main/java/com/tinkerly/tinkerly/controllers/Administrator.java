@@ -3,6 +3,7 @@ package com.tinkerly.tinkerly.controllers;
 import com.tinkerly.tinkerly.components.EndpointResponse;
 import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.AdministratorAction;
+import com.tinkerly.tinkerly.payloads.Report;
 import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

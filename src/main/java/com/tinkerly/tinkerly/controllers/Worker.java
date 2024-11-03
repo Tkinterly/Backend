@@ -5,10 +5,7 @@ import com.tinkerly.tinkerly.components.ProfileGenerator;
 import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +54,7 @@ public class Worker extends SessionController {
         return EndpointResponse.passed(workerProfile.get());
     }
 
-    @GetMapping("/worker/find")
+    @PostMapping("/worker/find")
     public EndpointResponse<List<WorkerProposal>> findWorkers(@RequestBody WorkerFindRequest workerFindRequest) {
         if (!this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");

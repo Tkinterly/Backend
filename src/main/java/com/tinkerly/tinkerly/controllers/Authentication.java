@@ -8,6 +8,7 @@ import com.tinkerly.tinkerly.repositories.*;
 import com.tinkerly.tinkerly.services.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -71,7 +72,7 @@ public class Authentication extends SessionController {
         );
     }
 
-    @GetMapping("/authenticate/token")
+    @PostMapping("/authenticate/token")
     public EndpointResponse<LoginResponse> authenticateToken(@RequestBody TokenLogin tokenLogin) {
         Optional<Sessions> sessions = this.sessionsRepository.findByToken(tokenLogin.getToken());
         if (sessions.isEmpty()) {
@@ -81,7 +82,7 @@ public class Authentication extends SessionController {
         return EndpointResponse.passed(this.populateLoginData(sessions.get().getUserId(), tokenLogin.getToken()));
     }
 
-    @GetMapping("/authenticate/credentials")
+    @PostMapping("/authenticate/credentials")
     public EndpointResponse<LoginResponse> authenticateCredentials(@RequestBody CredentialsLogin credentialsLogin) {
         Optional<Credentials> credentials = this.credentialsRepository.findOneByUsername(credentialsLogin.getUsername());
 
@@ -97,7 +98,7 @@ public class Authentication extends SessionController {
         return EndpointResponse.passed(this.populateLoginData(credentials.get().getUserId(), null));
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public EndpointResponse<Boolean> logout() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty()) {
