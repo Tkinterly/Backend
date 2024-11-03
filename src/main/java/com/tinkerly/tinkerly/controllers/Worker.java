@@ -2,9 +2,7 @@ package com.tinkerly.tinkerly.controllers;
 
 import com.tinkerly.tinkerly.components.EndpointResponse;
 import com.tinkerly.tinkerly.components.ProfileGenerator;
-import com.tinkerly.tinkerly.entities.BidRequests;
-import com.tinkerly.tinkerly.entities.Sessions;
-import com.tinkerly.tinkerly.entities.WorkRequests;
+import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,19 +23,22 @@ public class Worker extends SessionController {
     private final WorkRequestsRepository workRequestsRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final BidRequestsRepository bidRequestsRepository;
+    private final WorkerDomainsRepository workerDomainsRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
             ProfileGenerator profileGenerator,
             WorkRequestsRepository workRequestsRepository,
             WorkerProfileRepository workerProfileRepository,
-            BidRequestsRepository bidRequestsRepository
+            BidRequestsRepository bidRequestsRepository,
+            WorkerDomainsRepository workerDomainsRepository
     ) {
         super(sessionsRepository);
         this.profileGenerator = profileGenerator;
         this.workRequestsRepository = workRequestsRepository;
         this.workerProfileRepository  = workerProfileRepository;
         this.bidRequestsRepository = bidRequestsRepository;
+        this.workerDomainsRepository = workerDomainsRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -97,5 +99,31 @@ public class Worker extends SessionController {
         }
 
         return EndpointResponse.passed(new ListingsResponse<>(workRequests, bidRequests));
+    }
+
+    @GetMapping("/workers")
+    public EndpointResponse<List<List<Profile>>> getWorkers() {
+        List<List<Profile>> workersByCategories = new ArrayList<>();
+
+        for (int i = 0; i < 5; ++i) {
+            workersByCategories.add(new ArrayList<>());
+        }
+
+        for (WorkerProfiles workerProfileQuery : this.workerProfileRepository.findAll()) {
+            String workerId = workerProfileQuery.getUserId();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+
+            if (workerProfile.isEmpty()) {
+                continue;
+            }
+
+            List<WorkerDomains> workerDomainsQuery = this.workerDomainsRepository.findAllByUserId(workerId);
+
+            for (WorkerDomains workerDomainQuery : workerDomainsQuery) {
+                workersByCategories.get(workerDomainQuery.getDomain()).add(workerProfile.get());
+            }
+        }
+
+        return EndpointResponse.passed(workersByCategories);
     }
 }
