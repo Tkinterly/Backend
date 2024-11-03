@@ -103,6 +103,9 @@ public class Worker extends SessionController {
 
     @GetMapping("/workers")
     public EndpointResponse<List<List<Profile>>> getWorkers() {
+        if (!this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
         List<List<Profile>> workersByCategories = new ArrayList<>();
 
         for (int i = 0; i < 5; ++i) {
