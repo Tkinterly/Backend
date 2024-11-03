@@ -8,9 +8,7 @@ import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 public class Work extends SessionController {
@@ -204,5 +202,17 @@ public class Work extends SessionController {
         }
 
         return EndpointResponse.failed("");
+    }
+
+    @GetMapping("/work/details")
+    public EndpointResponse<List<WorkDetail>> getWorkDetails() {
+        List<WorkDetail> workDetails = new ArrayList<>();
+
+        for (WorkDetails workDetail : this.workDetailsRepository.findAll()) {
+            System.out.println(workDetail);
+            workDetails.add(new WorkDetail(workDetail));
+        }
+
+        return EndpointResponse.passed(workDetails);
     }
 }
