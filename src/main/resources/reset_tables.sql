@@ -1,0 +1,16 @@
+DROP TABLE administrator_profiles;
+DROP TABLE bid_requests;
+DROP TABLE credentials;
+DROP TABLE customer_profiles;
+DROP TABLE profiles;
+DROP TABLE reports;
+DROP TABLE sessions;
+DROP TABLE user_bookings;
+DROP TABLE user_details;
+DROP TABLE work_bookings;
+DROP TABLE work_details;
+DROP TABLE worker_domains;
+DROP TABLE worker_education;
+DROP TABLE worker_profiles;
+DROP TABLE worker_skills;
+DROP TABLE work_requests;
