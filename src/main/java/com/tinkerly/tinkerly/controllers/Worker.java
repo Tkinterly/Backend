@@ -107,7 +107,7 @@ public class Worker extends SessionController {
             workerProposals.add(new WorkerProposal(workerProfile, recommendedPrices));
         }
 
-        return EndpointResponse.failed("");
+        return EndpointResponse.passed(workerProposals);
     }
 
     @GetMapping("/worker/requests")
