@@ -56,16 +56,36 @@ public class Registration {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @PostMapping("/credentials/create")
+    public EndpointResponse<Boolean> createCredentials(@RequestBody List<Credentials> credentials) {
+
+        for (Credentials credential : credentials) {
+
+            String passwordHash = this.passwordEncoder.encode(credential.getPasswordHash());
+
+            Credentials credentialsEntry = new Credentials(
+                    credential.getUserId(),
+                    credential.getUsername(),
+                    passwordHash
+            );
+
+            this.credentialsRepository.save(credentialsEntry);
+        }
+
+        return EndpointResponse.passed(true);
+    }
+
     @PostMapping("/register")
     public EndpointResponse<String> register(@RequestBody RegistrationRequest registrationRequest) {
         String userId = UUID.randomUUID().toString();
         String passwordHash = this.passwordEncoder.encode(registrationRequest.getPassword());
+        String username = registrationRequest.getUsername();
 
-        Credentials credentialsEntry = new Credentials(
-            userId,
-            registrationRequest.getUsername(),
-            passwordHash
-        );
+        if (this.credentialsRepository.existsByUsername(username)) {
+            return EndpointResponse.failed("User already exists!");
+        }
+
+        Credentials credentialsEntry = new Credentials(userId, username, passwordHash);
 
         Profile userProfile = registrationRequest.getUserProfile();
         Profiles userProfileEntry = new Profiles(

@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface CustomerProfileRepository extends CrudRepository<CustomerProfiles, String> {
     Optional<CustomerProfiles> findByUserId(@Param("userId") String userId);
+    boolean existsByUserId(@Param("userId") String userId);
 }

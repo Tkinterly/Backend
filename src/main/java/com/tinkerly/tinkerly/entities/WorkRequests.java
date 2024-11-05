@@ -5,11 +5,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Entity
 public class WorkRequests {
     @Id
+    @Setter
     private String requestId;
 
     @Column(nullable = false)
@@ -28,7 +30,7 @@ public class WorkRequests {
 
     public WorkRequests(WorkRequest workRequest) {
         this.requestId = workRequest.getRequestId();
-        this.customerId = workRequest.getCustomerId();
+        this.customerId = workRequest.getCustomer().getUserId();
         this.workerId = workRequest.getWorkerId();
         this.workDetailsId = workRequest.getWorkDetailsId();
         this.biddingTier = workRequest.getBiddingTier();

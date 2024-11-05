@@ -9,7 +9,12 @@ import java.util.List;
 @Setter
 public class WorkerProposal {
     Profile workerProfile;
-    List<Float> recommendedPrice;
+    List<Integer> recommendedPrice;
 
     public WorkerProposal() {}
+
+    public WorkerProposal(Profile workerProfile, List<Integer> recommendedPrice) {
+        this.workerProfile = workerProfile;
+        this.recommendedPrice = recommendedPrice;
+    }
 }

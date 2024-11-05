@@ -11,4 +11,5 @@ import java.util.Optional;
 
 public interface CredentialsRepository extends CrudRepository<Credentials, String> {
     Optional<Credentials> findOneByUsername(@Param("username") String username);
+    boolean existsByUsername(@Param("username") String username);
 }

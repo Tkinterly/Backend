@@ -10,4 +10,5 @@ import java.util.Optional;
 
 public interface WorkerSkillsRepository extends CrudRepository<WorkerSkills, String> {
     List<WorkerSkills> findAllByUserId(@Param("userId") String userId);
+    List<WorkerSkills> findAllBySkill(@Param("skill") String skill);
 }

@@ -13,4 +13,11 @@ public class Report {
     String reason;
 
     public Report() {}
+
+    public Report(Reports reports, WorkBooking booking) {
+        this.reportId = reports.getReportId();
+        this.reason = reports.getReason();
+
+        this.booking = booking;
+    }
 }

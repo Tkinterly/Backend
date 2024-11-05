@@ -2,6 +2,7 @@ package com.tinkerly.tinkerly.repositories;
 
 import com.tinkerly.tinkerly.entities.BidRequests;
 import com.tinkerly.tinkerly.entities.WorkRequests;
+import jakarta.transaction.Transactional;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -13,5 +14,7 @@ public interface WorkRequestsRepository extends CrudRepository<WorkRequests, Str
     List<WorkRequests> findAllByWorkerId(@Param("workerId") String workerId);
     List<WorkRequests> findAllByCustomerId(@Param("customerId") String customerId);
     boolean existsByRequestId(@Param("requestId") String requestId);
+
+    @Transactional
     void deleteByRequestId(@Param("requestId") String requestId);
 }

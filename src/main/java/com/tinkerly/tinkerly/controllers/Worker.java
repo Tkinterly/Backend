@@ -7,10 +7,10 @@ import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.*;
 
 @RestController
 public class Worker extends SessionController {
@@ -21,6 +21,8 @@ public class Worker extends SessionController {
     private final WorkerProfileRepository workerProfileRepository;
     private final BidRequestsRepository bidRequestsRepository;
     private final WorkerDomainsRepository workerDomainsRepository;
+    private final WorkDetailsRepository workDetailsRepository;
+    public final WorkerSkillsRepository workerSkillsRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -28,7 +30,9 @@ public class Worker extends SessionController {
             WorkRequestsRepository workRequestsRepository,
             WorkerProfileRepository workerProfileRepository,
             BidRequestsRepository bidRequestsRepository,
-            WorkerDomainsRepository workerDomainsRepository
+            WorkerDomainsRepository workerDomainsRepository,
+            WorkDetailsRepository workDetailsRepository,
+            WorkerSkillsRepository workerSkillsRepository
     ) {
         super(sessionsRepository);
         this.profileGenerator = profileGenerator;
@@ -36,6 +40,8 @@ public class Worker extends SessionController {
         this.workerProfileRepository  = workerProfileRepository;
         this.bidRequestsRepository = bidRequestsRepository;
         this.workerDomainsRepository = workerDomainsRepository;
+        this.workDetailsRepository = workDetailsRepository;
+        this.workerSkillsRepository  = workerSkillsRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -63,6 +69,44 @@ public class Worker extends SessionController {
         // matching work domain and work type
         // similar platform experience
         // price evaluation
+        String workDetailsId = workerFindRequest.getWorkDetailsId();
+        Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workDetailsId);
+        if (workDetailsQuery.isEmpty()) {
+            return EndpointResponse.failed("Invalid work details!");
+        }
+
+        WorkDetails workDetails = workDetailsQuery.get();
+        List<WorkerSkills> workerSkillsQuery = this.workerSkillsRepository.findAllBySkill(workDetailsId);
+        List<WorkerProposal> workerProposals = new ArrayList<>();
+
+        for (WorkerSkills workerSkills : workerSkillsQuery) {
+            String workerId = workerSkills.getUserId();
+            Optional<Profile> workerProfileQuery = this.profileGenerator.getWorkerProfile(workerId);
+
+            if (workerProfileQuery.isEmpty()) {
+                continue;
+            }
+
+            Profile workerProfile = workerProfileQuery.get();
+
+            int workerExperience = workerProfile.getWorkerProfile().getYearsOfExperience();
+            int platformPresence = Period.between(
+                    workerProfile.getRegistrationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                    LocalDate.now()
+            ).getMonths();
+            double biddingPrice = workDetails.getRecommendedPrice();
+            double experienceFactor = 0.2 * (1 + Math.log10(1 + workerExperience));
+            double estimatedPrice = 0.9 * biddingPrice * (1 + experienceFactor * Math.log10(1 + platformPresence));
+
+            List<Integer> recommendedPrices = new ArrayList<>();
+
+            for (int i = 0; i < 5; ++i) {
+                recommendedPrices.add((int) (10 * Math.round(estimatedPrice * (0.95 + 0.025 * i) / 10)));
+            }
+
+            workerProposals.add(new WorkerProposal(workerProfile, recommendedPrices));
+        }
+
         return EndpointResponse.failed("");
     }
 
@@ -84,7 +128,11 @@ public class Worker extends SessionController {
         List<BidRequest> bidRequests = new ArrayList<>();
 
         for (WorkRequests workRequest : workRequestsQuery) {
-            workRequests.add(new WorkRequest(workRequest));
+            Optional<Profile> customer = this.profileGenerator.getCustomerProfile(workRequest.getCustomerId());
+            if (customer.isEmpty()) {
+                continue;
+            }
+            workRequests.add(new WorkRequest(workRequest, customer.get()));
 
             Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
 

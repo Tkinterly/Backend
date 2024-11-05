@@ -20,6 +20,8 @@ public class Work extends SessionController {
     private final UserBookingsRepository userBookingsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final ReportsRepository reportsRepository;
+    private final CustomerProfileRepository customerProfileRepository;
+    private final WorkerProfileRepository workerProfileRepository;
 
     public Work(
             ProfileGenerator profileGenerator,
@@ -29,7 +31,9 @@ public class Work extends SessionController {
             WorkBookingsRepository workBookingsRepository,
             UserBookingsRepository userBookingsRepository,
             WorkDetailsRepository workDetailsRepository,
-            ReportsRepository reportsRepository
+            ReportsRepository reportsRepository,
+            CustomerProfileRepository customerProfileRepository,
+            WorkerProfileRepository workerProfileRepository
     ) {
         super(sessionsRepository);
         this.profileGenerator = profileGenerator;
@@ -39,18 +43,30 @@ public class Work extends SessionController {
         this.userBookingsRepository = userBookingsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.reportsRepository = reportsRepository;
+        this.customerProfileRepository = customerProfileRepository;
+        this.workerProfileRepository = workerProfileRepository;
     }
 
     @PostMapping("/work/create")
-    public EndpointResponse<WorkRequest> createWork(@RequestBody WorkRequest workRequest) {
+    public EndpointResponse<WorkRequests> createWork(@RequestBody WorkRequests workRequest) {
         if (!this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
-        workRequest.setWorkDetailsId(UUID.randomUUID().toString());
+        if (!this.customerProfileRepository.existsByUserId(workRequest.getCustomerId())) {
+            return EndpointResponse.failed("Customer not found!");
+        }
 
-        WorkRequests workRequests = new WorkRequests(workRequest);
-        this.workRequestsRepository.save(workRequests);
+        if (!this.workerProfileRepository.existsByUserId(workRequest.getWorkerId())) {
+            return EndpointResponse.failed("Worker not found!");
+        }
+
+        if (!this.workDetailsRepository.existsById(workRequest.getWorkDetailsId())) {
+            return EndpointResponse.failed("Work details not found!");
+        }
+
+        workRequest.setRequestId(UUID.randomUUID().toString());
+        this.workRequestsRepository.save(workRequest);
 
         return EndpointResponse.passed(workRequest);
     }
@@ -87,7 +103,9 @@ public class Work extends SessionController {
             return EndpointResponse.failed("Invalid work request!");
         }
 
-        if (workApproval.isApproved()) {
+        System.out.println(workApproval.getIsApproved());
+
+        if (workApproval.getIsApproved()) {
             String bookingId = UUID.randomUUID().toString();
 
             Optional<WorkRequests> workRequestsQuery = this.workRequestsRepository.findByRequestId(requestId);
@@ -181,14 +199,14 @@ public class Work extends SessionController {
     }
 
     @PostMapping("/work/complete")
-    public EndpointResponse<String> completeWork(@RequestBody WorkCompletion workCompletion) {
+    public EndpointResponse<Boolean> completeWork(@RequestBody WorkCompletion workCompletion) {
         if (!this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
         String bookingId = workCompletion.getBookingId();
 
-        if (workCompletion.isReported()) {
+        if (workCompletion.getIsReported()) {
             Reports report = new Reports(
                     UUID.randomUUID().toString(),
                     bookingId,
@@ -201,7 +219,7 @@ public class Work extends SessionController {
             this.userBookingsRepository.deleteByBookingId(bookingId);
         }
 
-        return EndpointResponse.failed("");
+        return EndpointResponse.passed(true);
     }
 
     @GetMapping("/work/details")

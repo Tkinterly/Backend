@@ -1,20 +1,23 @@
 package com.tinkerly.tinkerly.controllers;
 
 import com.tinkerly.tinkerly.components.EndpointResponse;
+import com.tinkerly.tinkerly.components.ProfileGenerator;
 import com.tinkerly.tinkerly.entities.*;
-import com.tinkerly.tinkerly.payloads.AdministratorAction;
-import com.tinkerly.tinkerly.payloads.Report;
+import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 public class Administrator extends SessionController {
+    private final ProfileGenerator profileGenerator;
+
     private final ReportsRepository reportsRepository;
     private final AdministratorProfileRepository administratorProfileRepository;
     private final WorkBookingsRepository workBookingsRepository;
@@ -22,6 +25,7 @@ public class Administrator extends SessionController {
     private final UserBookingsRepository userBookingsRepository;
 
     public Administrator(
+            ProfileGenerator profileGenerator,
             SessionsRepository sessionsRepository,
             ReportsRepository reportsRepository,
             AdministratorProfileRepository administratorProfileRepository,
@@ -31,6 +35,7 @@ public class Administrator extends SessionController {
 
     ) {
         super(sessionsRepository);
+        this.profileGenerator = profileGenerator;
         this.reportsRepository = reportsRepository;
         this.administratorProfileRepository = administratorProfileRepository;
         this.workBookingsRepository = workBookingsRepository;
@@ -39,10 +44,34 @@ public class Administrator extends SessionController {
     }
 
     @GetMapping("/admin/reports/{page}")
-    public EndpointResponse<List<Reports> > getReports(@PathVariable int page) {
+    public EndpointResponse<List<Report>> getReports(@PathVariable int page) {
         Pageable pageable = PageRequest.of(page, 10);
 
-        return EndpointResponse.passed(this.reportsRepository.findAll(pageable));
+        List<Reports> reportsQuery = this.reportsRepository.findAll(pageable);
+
+        List<Report> reports = new ArrayList<>();
+        for (Reports report : reportsQuery) {
+            Optional<WorkBookings> workBookingsQuery = this.workBookingsRepository.findByBookingId(report.getBookingId());
+            if (workBookingsQuery.isEmpty()) {
+                continue;
+            }
+
+            WorkBookings workBookingEntry = workBookingsQuery.get();
+
+            String workerId = workBookingEntry.getWorkerId();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+
+            if (workerProfile.isEmpty()) {
+                continue;
+            }
+
+            reports.add(new Report(
+                    report,
+                    new WorkBooking(workBookingEntry, workerProfile.get())
+            ));
+        }
+
+        return EndpointResponse.passed(reports);
     }
 
     @PostMapping ("/admin/act")

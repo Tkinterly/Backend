@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class WorkCompletion {
     String bookingId;
-    boolean isReported;
+    Boolean isReported;
     String reportReason;
 
     public WorkCompletion() {}

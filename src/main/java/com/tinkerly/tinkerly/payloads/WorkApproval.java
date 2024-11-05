@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class WorkApproval {
     String requestId;
-    boolean isApproved;
+    Boolean isApproved;
 
     public WorkApproval() {}
 }
