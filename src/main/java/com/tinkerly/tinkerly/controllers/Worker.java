@@ -66,9 +66,6 @@ public class Worker extends SessionController {
             return EndpointResponse.failed("Invalid session!");
         }
 
-        // matching work domain and work type
-        // similar platform experience
-        // price evaluation
         String workDetailsId = workerFindRequest.getWorkDetailsId();
         Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workDetailsId);
         if (workDetailsQuery.isEmpty()) {

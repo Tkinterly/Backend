@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SessionsRepository extends CrudRepository<Sessions, String> {
+    Optional<Sessions> findByUserId(@Param("userId") String userId);
     Optional<Sessions> findByToken(@Param("token") String token);
     @Transactional
     void deleteByToken(@Param("token") String token);

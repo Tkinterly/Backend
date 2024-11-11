@@ -95,7 +95,14 @@ public class Authentication extends SessionController {
             return EndpointResponse.failed("Invalid credentials!");
         }
 
-        return EndpointResponse.passed(this.populateLoginData(credentials.get().getUserId(), null));
+        Optional<Sessions> existingSession = this.sessionsRepository.findByUserId(credentials.get().getUserId());
+
+        return EndpointResponse.passed(
+                this.populateLoginData(
+                        credentials.get().getUserId(),
+                        existingSession.map(Sessions::getToken).orElse(null)
+                )
+        );
     }
 
     @PostMapping("/logout")
