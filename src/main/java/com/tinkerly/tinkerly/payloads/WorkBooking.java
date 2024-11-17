@@ -24,4 +24,12 @@ public class WorkBooking {
     }
 
     public WorkBooking() {}
+
+    public WorkBooking(String bookingId, String workDetailsId, int biddingTier, int workPrice, Profile workerProfile) {
+        this.bookingId = bookingId;
+        this.workDetailsId = workDetailsId;
+        this.biddingTier = biddingTier;
+        this.workPrice = workPrice;
+        this.workerProfile = workerProfile;
+    }
 }

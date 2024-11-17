@@ -1,6 +1,7 @@
 package com.tinkerly.tinkerly.controllers;
 
 import com.tinkerly.tinkerly.components.EndpointResponse;
+import com.tinkerly.tinkerly.components.PriceGenerator;
 import com.tinkerly.tinkerly.components.ProfileGenerator;
 import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.*;
@@ -99,13 +100,31 @@ public class Customer extends SessionController {
         List<WorkRequests> workRequests = this.workRequestsRepository.findAllByCustomerId(customerId);
 
         for (WorkRequests workRequest : workRequests) {
-            Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
+            Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workRequest.getWorkDetailsId());
 
-            if (bidRequest.isEmpty()) {
-                continue;
+            Profile workerProfile = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId()).orElse(null);
+
+            if (workDetailsQuery.isPresent() && workerProfile != null) {
+                String bookingId = workRequest.getRequestId();
+                int price = PriceGenerator.generate(
+                        workDetailsQuery.get().getRecommendedPrice(),
+                        workerProfile.getWorkerProfile().getYearsOfExperience(),
+                        workerProfile.getRegistrationDate()
+                );
+
+                WorkBooking workBooking = new WorkBooking(
+                        bookingId,
+                        workRequest.getWorkDetailsId(),
+                        workRequest.getBiddingTier(),
+                        price,
+                        workerProfile
+                );
+
+                bookings.add(new UserBooking(bookingId, 0, workBooking));
             }
 
-            bidRequests.add(new BidRequest(bidRequest.get()));
+            Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
+            bidRequest.ifPresent(requests -> bidRequests.add(new BidRequest(requests)));
         }
 
         return EndpointResponse.passed(new ListingsResponse<>(bookings, bidRequests));

@@ -1,6 +1,7 @@
 package com.tinkerly.tinkerly.controllers;
 
 import com.tinkerly.tinkerly.components.EndpointResponse;
+import com.tinkerly.tinkerly.components.PriceGenerator;
 import com.tinkerly.tinkerly.components.ProfileGenerator;
 import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.*;
@@ -139,15 +140,12 @@ public class Work extends SessionController {
                     .map(BidRequests::getBiddingTier)
                     .orElseGet(workRequests::getBiddingTier);
 
-            int workerExperience = workerProfile.getWorkerProfile().getYearsOfExperience();
-            int platformPresence = Period.between(
-                    workerProfile.getRegistrationDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                    LocalDate.now()
-            ).getMonths();
-            double biddingPrice = workDetails.getRecommendedPrice() * (1 - (acceptedBiddingTier - 2)  * 0.025);
-            double experienceFactor = 0.2 * (1 + Math.log10(1 + workerExperience));
-            double estimatedPrice = 0.9 * biddingPrice * (1 + experienceFactor * Math.log10(1 + platformPresence));
-            int roundedPrice = (int) (Math.round(estimatedPrice / 10) * 10);
+            int roundedPrice = PriceGenerator.generate(
+                    workDetails.getRecommendedPrice(),
+                    workerProfile.getWorkerProfile().getYearsOfExperience(),
+                    workerProfile.getRegistrationDate(),
+                    acceptedBiddingTier
+            );
 
             UserBookings userBookingEntry = new UserBookings(
                     bookingId,
@@ -227,7 +225,6 @@ public class Work extends SessionController {
         List<WorkDetail> workDetails = new ArrayList<>();
 
         for (WorkDetails workDetail : this.workDetailsRepository.findAll()) {
-            System.out.println(workDetail);
             workDetails.add(new WorkDetail(workDetail));
         }
 

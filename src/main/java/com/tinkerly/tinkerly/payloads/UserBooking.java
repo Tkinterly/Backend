@@ -20,4 +20,10 @@ public class UserBooking {
     }
 
     public UserBooking() {}
+
+    public UserBooking(String bookingId, int status, WorkBooking workBooking) {
+        this.bookingId = bookingId;
+        this.status = status;
+        this.workBooking = workBooking;
+    }
 }
