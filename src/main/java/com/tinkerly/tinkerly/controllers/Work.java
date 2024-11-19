@@ -150,7 +150,7 @@ public class Work extends SessionController {
             UserBookings userBookingEntry = new UserBookings(
                     bookingId,
                     workRequests.getCustomerId(),
-                    0
+                    1
             );
 
             WorkBookings workBookingEntry = new WorkBookings(
