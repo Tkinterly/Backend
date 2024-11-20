@@ -6,6 +6,7 @@ import com.tinkerly.tinkerly.components.ProfileGenerator;
 import com.tinkerly.tinkerly.entities.*;
 import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin
 public class Customer extends SessionController {
 
     private final ProfileGenerator profileGenerator;

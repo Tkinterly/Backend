@@ -13,6 +13,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 @RestController
+@CrossOrigin
 public class Worker extends SessionController {
 
     private final ProfileGenerator profileGenerator;

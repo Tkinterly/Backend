@@ -12,6 +12,7 @@ import java.time.*;
 import java.util.*;
 
 @RestController
+@CrossOrigin
 public class Work extends SessionController {
     private final ProfileGenerator profileGenerator;
 

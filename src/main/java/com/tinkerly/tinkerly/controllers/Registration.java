@@ -9,6 +9,7 @@ import com.tinkerly.tinkerly.payloads.WorkerProfile;
 import com.tinkerly.tinkerly.repositories.*;
 import com.tinkerly.tinkerly.services.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin
 public class Registration {
     private final CredentialsRepository credentialsRepository;
     private final ProfileRepository profileRepository;

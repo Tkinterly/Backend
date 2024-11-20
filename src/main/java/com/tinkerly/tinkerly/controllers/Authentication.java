@@ -7,14 +7,12 @@ import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import com.tinkerly.tinkerly.services.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @RestController
+@CrossOrigin
 public class Authentication extends SessionController {
     private final ProfileGenerator profileGenerator;
     private final CredentialsRepository credentialsRepository;
