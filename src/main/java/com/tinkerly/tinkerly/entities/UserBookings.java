@@ -2,8 +2,10 @@ package com.tinkerly.tinkerly.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Entity
 public class UserBookings {
     @Id

@@ -136,6 +136,9 @@ public class Administrator extends SessionController {
 
                 break;
             }
+            case 2: {
+                break;
+            }
             default: {
                 return EndpointResponse.failed("Invalid action!");
             }

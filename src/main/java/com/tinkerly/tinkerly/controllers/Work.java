@@ -203,6 +203,13 @@ public class Work extends SessionController {
         }
 
         String bookingId = workCompletion.getBookingId();
+        Optional<UserBookings> userBookingEntry = this.userBookingsRepository.findByBookingId(bookingId);
+
+        if (userBookingEntry.isEmpty()) {
+            return EndpointResponse.failed("Invalid booking!");
+        }
+
+        UserBookings userBooking = userBookingEntry.get();
 
         if (workCompletion.getIsReported()) {
             Reports report = new Reports(
@@ -212,6 +219,9 @@ public class Work extends SessionController {
             );
 
             this.reportsRepository.save(report);
+
+            userBooking.setStatus(2);
+            this.userBookingsRepository.save(userBooking);
         } else {
             this.workBookingsRepository.deleteByBookingId(bookingId);
             this.userBookingsRepository.deleteByBookingId(bookingId);
