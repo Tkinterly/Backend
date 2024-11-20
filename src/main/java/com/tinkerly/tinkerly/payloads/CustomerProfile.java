@@ -13,5 +13,9 @@ public class CustomerProfile {
         this.bookingSlots = customerProfile.getBookingSlots();
     }
 
+    public CustomerProfile(int bookingSlots) {
+        this.bookingSlots = bookingSlots;
+    }
+
     public CustomerProfile() {}
 }

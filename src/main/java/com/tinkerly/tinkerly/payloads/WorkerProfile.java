@@ -31,5 +31,19 @@ public class WorkerProfile {
         this.workerSkills = workerSkills;
     }
 
+    public WorkerProfile(
+        int yearsOfExperience,
+        List<Integer> workerDomains,
+        List<String> workerEducation,
+        List<String> workerSkills
+    ) {
+        this.yearsOfExperience = yearsOfExperience;
+        this.suspension = null;
+        this.banned = false;
+        this.workerDomains = workerDomains;
+        this.workerEducation = workerEducation;
+        this.workerSkills = workerSkills;
+    }
+
     public WorkerProfile() {}
 }

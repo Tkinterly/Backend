@@ -23,6 +23,9 @@ public class Worker extends SessionController {
     private final WorkerDomainsRepository workerDomainsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     public final WorkerSkillsRepository workerSkillsRepository;
+    public final UserBookingsRepository userBookingsRepository;
+    public final WorkBookingsRepository workBookingsRepository;
+    private final Work work;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -32,8 +35,10 @@ public class Worker extends SessionController {
             BidRequestsRepository bidRequestsRepository,
             WorkerDomainsRepository workerDomainsRepository,
             WorkDetailsRepository workDetailsRepository,
-            WorkerSkillsRepository workerSkillsRepository
-    ) {
+            WorkerSkillsRepository workerSkillsRepository,
+            UserBookingsRepository userBookingsRepository,
+            WorkBookingsRepository workBookingsRepository,
+            Work work) {
         super(sessionsRepository);
         this.profileGenerator = profileGenerator;
         this.workRequestsRepository = workRequestsRepository;
@@ -42,6 +47,9 @@ public class Worker extends SessionController {
         this.workerDomainsRepository = workerDomainsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.workerSkillsRepository  = workerSkillsRepository;
+        this.userBookingsRepository = userBookingsRepository;
+        this.workBookingsRepository = workBookingsRepository;
+        this.work = work;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -141,6 +149,43 @@ public class Worker extends SessionController {
         }
 
         return EndpointResponse.passed(new ListingsResponse<>(workRequests, bidRequests));
+    }
+
+    @GetMapping("/worker/bookings")
+    public EndpointResponse<List<UserBooking>> getBookings() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String workerId = sessions.get().getUserId();
+
+        List<WorkBookings> workBookings = this.workBookingsRepository.findAllByWorkerId(workerId);
+
+        List<UserBooking> bookings = new ArrayList<UserBooking>();
+        for (WorkBookings workBookingEntry : workBookings) {
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+
+            if (workerProfile.isEmpty()) {
+                continue;
+            }
+
+            Optional<UserBookings> userBooking = this.userBookingsRepository.findByBookingId(
+                    workBookingEntry.getBookingId()
+            );
+
+            if (userBooking.isEmpty()) {
+                continue;
+            }
+
+            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get());
+
+            bookings.add(
+                    new UserBooking(userBooking.get(), workBooking)
+            );
+        }
+
+        return EndpointResponse.passed(bookings);
     }
 
     @GetMapping("/workers")
