@@ -14,8 +14,6 @@ import java.util.*;
 @RestController
 @CrossOrigin
 public class Work extends SessionController {
-    private final ProfileGenerator profileGenerator;
-
     private final BidRequestsRepository bidRequestsRepository;
     private final WorkRequestsRepository workRequestsRepository;
     private final WorkBookingsRepository workBookingsRepository;
@@ -37,8 +35,7 @@ public class Work extends SessionController {
             CustomerProfileRepository customerProfileRepository,
             WorkerProfileRepository workerProfileRepository
     ) {
-        super(sessionsRepository);
-        this.profileGenerator = profileGenerator;
+        super(sessionsRepository, profileGenerator);
         this.bidRequestsRepository = bidRequestsRepository;
         this.workRequestsRepository = workRequestsRepository;
         this.workBookingsRepository = workBookingsRepository;

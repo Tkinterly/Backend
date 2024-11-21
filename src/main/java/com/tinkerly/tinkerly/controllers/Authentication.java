@@ -9,6 +9,7 @@ import com.tinkerly.tinkerly.services.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.*;
 
 @RestController
@@ -26,7 +27,7 @@ public class Authentication extends SessionController {
             CredentialsRepository credentialsRepository,
             WorkDetailsRepository workDetailsRepository
     ) {
-        super(sessionsRepository);
+        super(sessionsRepository, profileGenerator);
         this.profileGenerator = profileGenerator;
         this.credentialsRepository = credentialsRepository;
         this.workDetailsRepository = workDetailsRepository;
@@ -72,12 +73,26 @@ public class Authentication extends SessionController {
 
     @PostMapping("/authenticate/token")
     public EndpointResponse<LoginResponse> authenticateToken(@RequestBody TokenLogin tokenLogin) {
-        Optional<Sessions> sessions = this.sessionsRepository.findByToken(tokenLogin.getToken());
-        if (sessions.isEmpty()) {
+        Optional<Sessions> sessionQuery = this.sessionsRepository.findByToken(tokenLogin.getToken());
+        if (sessionQuery.isEmpty()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
-        return EndpointResponse.passed(this.populateLoginData(sessions.get().getUserId(), tokenLogin.getToken()));
+
+        Sessions session = sessionQuery.get();
+        String userId = session.getUserId();
+        Optional<WorkerProfile> workerProfile = this.profileGenerator.getWorkerOnlyProfile(userId);
+        Instant dateRightNow = new Date().toInstant();
+
+        if (workerProfile.isPresent() && (
+                workerProfile.get().isBanned()
+                || (workerProfile.get().getSuspension() != null
+                        && workerProfile.get().getSuspension().toInstant().isAfter(dateRightNow))
+        )) {
+            return EndpointResponse.failed("Worker cannot access platform!");
+        }
+
+        return EndpointResponse.passed(this.populateLoginData(sessionQuery.get().getUserId(), tokenLogin.getToken()));
     }
 
     @PostMapping("/authenticate/credentials")
@@ -93,11 +108,24 @@ public class Authentication extends SessionController {
             return EndpointResponse.failed("Invalid credentials!");
         }
 
-        Optional<Sessions> existingSession = this.sessionsRepository.findByUserId(credentials.get().getUserId());
+        String userId = credentials.get().getUserId();
+
+        Optional<WorkerProfile> workerProfile = this.profileGenerator.getWorkerOnlyProfile(userId);
+        Instant dateRightNow = new Date().toInstant();
+
+        if (workerProfile.isPresent() && (
+                workerProfile.get().isBanned()
+                        || (workerProfile.get().getSuspension() != null
+                        && workerProfile.get().getSuspension().toInstant().isAfter(dateRightNow))
+        )) {
+            return EndpointResponse.failed("Worker cannot access platform!");
+        }
+
+        Optional<Sessions> existingSession = this.sessionsRepository.findByUserId(userId);
 
         return EndpointResponse.passed(
                 this.populateLoginData(
-                        credentials.get().getUserId(),
+                        userId,
                         existingSession.map(Sessions::getToken).orElse(null)
                 )
         );

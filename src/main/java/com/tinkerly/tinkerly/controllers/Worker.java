@@ -15,9 +15,6 @@ import java.util.*;
 @RestController
 @CrossOrigin
 public class Worker extends SessionController {
-
-    private final ProfileGenerator profileGenerator;
-
     private final WorkRequestsRepository workRequestsRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final BidRequestsRepository bidRequestsRepository;
@@ -26,7 +23,6 @@ public class Worker extends SessionController {
     public final WorkerSkillsRepository workerSkillsRepository;
     public final UserBookingsRepository userBookingsRepository;
     public final WorkBookingsRepository workBookingsRepository;
-    private final Work work;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -38,10 +34,8 @@ public class Worker extends SessionController {
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
             UserBookingsRepository userBookingsRepository,
-            WorkBookingsRepository workBookingsRepository,
-            Work work) {
-        super(sessionsRepository);
-        this.profileGenerator = profileGenerator;
+            WorkBookingsRepository workBookingsRepository) {
+        super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
         this.workerProfileRepository  = workerProfileRepository;
         this.bidRequestsRepository = bidRequestsRepository;
@@ -50,7 +44,6 @@ public class Worker extends SessionController {
         this.workerSkillsRepository  = workerSkillsRepository;
         this.userBookingsRepository = userBookingsRepository;
         this.workBookingsRepository = workBookingsRepository;
-        this.work = work;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -119,7 +112,7 @@ public class Worker extends SessionController {
     @GetMapping("/worker/requests")
     public EndpointResponse<ListingsResponse<WorkRequest>> getRequests() {
         Optional<Sessions> sessions = this.getSession();
-        if (sessions.isEmpty()) {
+        if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
@@ -155,7 +148,7 @@ public class Worker extends SessionController {
     @GetMapping("/worker/bookings")
     public EndpointResponse<List<UserBooking>> getBookings() {
         Optional<Sessions> sessions = this.getSession();
-        if (sessions.isEmpty()) {
+        if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 

@@ -8,10 +8,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
+@Setter
 @Entity
 public class WorkRequests {
     @Id
-    @Setter
     private String requestId;
 
     @Column(nullable = false)
@@ -34,5 +34,9 @@ public class WorkRequests {
         this.workerId = workRequest.getWorkerId();
         this.workDetailsId = workRequest.getWorkDetailsId();
         this.biddingTier = workRequest.getBiddingTier();
+    }
+
+    public static WorkRequests create() {
+        return new WorkRequests();
     }
 }

@@ -17,7 +17,6 @@ import java.util.Optional;
 @RestController
 @CrossOrigin
 public class Administrator extends SessionController {
-    private final ProfileGenerator profileGenerator;
 
     private final ReportsRepository reportsRepository;
     private final AdministratorProfileRepository administratorProfileRepository;
@@ -35,8 +34,7 @@ public class Administrator extends SessionController {
             UserBookingsRepository userBookingsRepository
 
     ) {
-        super(sessionsRepository);
-        this.profileGenerator = profileGenerator;
+        super(sessionsRepository, profileGenerator);
         this.reportsRepository = reportsRepository;
         this.administratorProfileRepository = administratorProfileRepository;
         this.workBookingsRepository = workBookingsRepository;
@@ -148,6 +146,7 @@ public class Administrator extends SessionController {
         this.workerProfileRepository.save(workerProfile);
         this.workBookingsRepository.deleteByBookingId(bookingId);
         this.userBookingsRepository.deleteByBookingId(bookingId);
+        this.reportsRepository.deleteByReportId(reports.getReportId());
 
         return EndpointResponse.passed(true);
     }

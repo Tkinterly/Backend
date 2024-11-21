@@ -19,7 +19,6 @@ import java.util.Optional;
 @CrossOrigin
 public class Customer extends SessionController {
 
-    private final ProfileGenerator profileGenerator;
     private final UserBookingsRepository userBookingsRepository;
     private final WorkBookingsRepository workBookingsRepository;
     private final WorkDetailsRepository workDetailsRepository;
@@ -35,8 +34,7 @@ public class Customer extends SessionController {
             WorkRequestsRepository workRequestsRepository,
             BidRequestsRepository bidRequestsRepository
     ) {
-        super(sessionsRepository);
-        this.profileGenerator = profileGenerator;
+        super(sessionsRepository, profileGenerator);
         this.userBookingsRepository = userBookingsRepository;
         this.workBookingsRepository = workBookingsRepository;
         this.workDetailsRepository = workDetailsRepository;
@@ -63,7 +61,7 @@ public class Customer extends SessionController {
     @GetMapping("/customer/bookings")
     public EndpointResponse<ListingsResponse<UserBooking>> getBookings() {
         Optional<Sessions> sessions = this.getSession();
-        if (sessions.isEmpty()) {
+        if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
