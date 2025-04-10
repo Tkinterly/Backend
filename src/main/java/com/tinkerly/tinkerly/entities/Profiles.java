@@ -11,6 +11,9 @@ public class Profiles {
     @Id
     private String userId;
 
+    @Column
+    private String avatarId;
+
     @Column(nullable = false)
     private Date registrationDate;
 
@@ -22,7 +25,7 @@ public class Profiles {
 
     protected Profiles() {}
 
-    public Profiles(String userId, Date registrationDate, int access, float averageRating) {
+    public Profiles(String userId, String avatarId, Date registrationDate, int access, float averageRating) {
         this.userId = userId;
         this.registrationDate = registrationDate;
         this.access = access;

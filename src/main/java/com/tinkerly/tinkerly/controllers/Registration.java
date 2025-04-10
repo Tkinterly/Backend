@@ -7,6 +7,7 @@ import com.tinkerly.tinkerly.payloads.RegistrationRequest;
 import com.tinkerly.tinkerly.payloads.UserDetail;
 import com.tinkerly.tinkerly.payloads.WorkerProfile;
 import com.tinkerly.tinkerly.repositories.*;
+import com.tinkerly.tinkerly.services.ImageCleanup;
 import com.tinkerly.tinkerly.services.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,6 +33,7 @@ public class Registration {
     private final WorkerSkillsRepository workerSkillsRepository;
 
     PasswordEncoder passwordEncoder;
+    ImageCleanup imageCleanup;
 
     public Registration(
             CredentialsRepository credentialsRepository,
@@ -56,6 +58,11 @@ public class Registration {
     @Autowired
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setImageCleanup(ImageCleanup imageCleanup) {
+        this.imageCleanup = imageCleanup;
     }
 
     @PostMapping("/credentials/create")
@@ -92,6 +99,7 @@ public class Registration {
         Profile userProfile = registrationRequest.getUserProfile();
         Profiles userProfileEntry = new Profiles(
                 userId,
+                userProfile.getAvatarId(),
                 Calendar.getInstance().getTime(),
                 0,
                 0
@@ -138,9 +146,13 @@ public class Registration {
             this.workerDomainsRepository.saveAll(workerDomains);
             this.workerEducationRepository.saveAll(workerEducations);
             this.workerSkillsRepository.saveAll(workerSkills);
+
+            this.imageCleanup.claimImage(userProfile.getAvatarId());
         } else {
             return EndpointResponse.failed("Invalid profile data!");
         }
+
+        imageCleanup.performCleanup();
 
         return EndpointResponse.passed(userId);
     }

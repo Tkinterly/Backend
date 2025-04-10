@@ -10,6 +10,7 @@ import java.util.Date;
 @Setter
 public class Profile {
     String userId;
+    String avatarId;
     Date registrationDate;
     int access;
     float averageRating;
@@ -26,6 +27,7 @@ public class Profile {
             WorkerProfile workerProfile
     ) {
         this.userId = profile.getUserId();
+        this.avatarId = profile.getAvatarId();
         this.registrationDate = profile.getRegistrationDate();
         this.access = profile.getAccess();
         this.averageRating = profile.getAverageRating();
