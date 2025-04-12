@@ -34,6 +34,10 @@ public class ImageCleanup {
 
     @Async
     public void performCleanup() {
+        if (unclaimedImageIds.isEmpty()) {
+            return;
+        }
+
         ArrayList<String> imagesToCleanup = new ArrayList<>();
         for (String imageId : unclaimedImageIds.keySet()) {
             Date imageInsertDate = unclaimedImageIds.get(imageId);
