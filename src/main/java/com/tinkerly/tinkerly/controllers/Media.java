@@ -15,7 +15,7 @@ import java.util.UUID;
 @CrossOrigin
 public class Media {
 
-    private static final String UPLOAD_DIR = "/home/spuggle/cdn/";
+    private static final String UPLOAD_DIR = "/home/ubuntu/cdn/";
 
     private ImageCleanup imageCleanup;
 
