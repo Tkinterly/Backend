@@ -27,6 +27,7 @@ public class Profiles {
 
     public Profiles(String userId, String avatarId, Date registrationDate, int access, float averageRating) {
         this.userId = userId;
+        this.avatarId = avatarId;
         this.registrationDate = registrationDate;
         this.access = access;
         this.averageRating = averageRating;
