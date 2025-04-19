@@ -78,6 +78,7 @@ public class TinkerlyApplicationTests {
 
 		WorkerProfile workerProfile = new WorkerProfile(
 				(int) Math.round(Math.random() * 10),
+				new DaySlots(),
 				selectedDomains,
 				selectedEducation,
 				selectedSkills

@@ -2,10 +2,8 @@ package com.tinkerly.tinkerly.controllers;
 
 import com.tinkerly.tinkerly.components.EndpointResponse;
 import com.tinkerly.tinkerly.entities.*;
-import com.tinkerly.tinkerly.payloads.Profile;
-import com.tinkerly.tinkerly.payloads.RegistrationRequest;
-import com.tinkerly.tinkerly.payloads.UserDetail;
-import com.tinkerly.tinkerly.payloads.WorkerProfile;
+import com.tinkerly.tinkerly.entities.WorkerSlots;
+import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import com.tinkerly.tinkerly.services.ImageCleanup;
 import com.tinkerly.tinkerly.services.PasswordEncoder;
@@ -15,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -31,6 +30,7 @@ public class Registration {
     private final WorkerDomainsRepository workerDomainsRepository;
     private final WorkerEducationRepository workerEducationRepository;
     private final WorkerSkillsRepository workerSkillsRepository;
+    private final WorkerSlotsRepository workerSlotsRepository;
 
     PasswordEncoder passwordEncoder;
     ImageCleanup imageCleanup;
@@ -43,7 +43,8 @@ public class Registration {
             WorkerProfileRepository workerProfileRepository,
             WorkerDomainsRepository workerDomainsRepository,
             WorkerEducationRepository workerEducationRepository,
-            WorkerSkillsRepository workerSkillsRepository
+            WorkerSkillsRepository workerSkillsRepository,
+            WorkerSlotsRepository workerSlotsRepository
     ) {
         this.credentialsRepository = credentialsRepository;
         this.profileRepository = profileRepository;
@@ -53,6 +54,7 @@ public class Registration {
         this.workerDomainsRepository = workerDomainsRepository;
         this.workerEducationRepository = workerEducationRepository;
         this.workerSkillsRepository = workerSkillsRepository;
+        this.workerSlotsRepository = workerSlotsRepository;
     }
 
     @Autowired
@@ -125,6 +127,36 @@ public class Registration {
                     null,
                     false
             );
+
+            DaySlots daySlots = workerProfile.getDaySlots();
+            if (daySlots.getMon() != null) {
+                WorkerSlots monSlot = new WorkerSlots(userId, 0, daySlots.getMon());
+                this.workerSlotsRepository.save(monSlot);
+            }
+            if (daySlots.getTue() != null) {
+                WorkerSlots tueSlot = new WorkerSlots(userId, 1, daySlots.getTue());
+                this.workerSlotsRepository.save(tueSlot);
+            }
+            if (daySlots.getWed() != null) {
+                WorkerSlots wedSlot = new WorkerSlots(userId, 2, daySlots.getWed());
+                this.workerSlotsRepository.save(wedSlot);
+            }
+            if (daySlots.getThu() != null) {
+                WorkerSlots thuSlot = new WorkerSlots(userId, 3, daySlots.getThu());
+                this.workerSlotsRepository.save(thuSlot);
+            }
+            if (daySlots.getFri() != null) {
+                WorkerSlots friSlot = new WorkerSlots(userId, 4, daySlots.getFri());
+                this.workerSlotsRepository.save(friSlot);
+            }
+            if (daySlots.getSat() != null) {
+                WorkerSlots satSlot = new WorkerSlots(userId, 5, daySlots.getSat());
+                this.workerSlotsRepository.save(satSlot);
+            }
+            if (daySlots.getSun() != null) {
+                WorkerSlots sunSlot = new WorkerSlots(userId, 6, daySlots.getSun());
+                this.workerSlotsRepository.save(sunSlot);
+            }
 
             List<WorkerDomains> workerDomains = new ArrayList<>();
             List<WorkerEducation> workerEducations = new ArrayList<>();

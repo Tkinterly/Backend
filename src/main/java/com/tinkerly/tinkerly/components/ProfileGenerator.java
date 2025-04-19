@@ -6,6 +6,7 @@ import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ public class ProfileGenerator {
     private WorkerDomainsRepository workerDomainsRepository;
     private WorkerEducationRepository workerEducationRepository;
     private WorkerSkillsRepository workerSkillsRepository;
+    private WorkerSlotsRepository workerSlotsRepository;
 
     @Autowired
     public void setProfileRepository(ProfileRepository profileRepository) {
@@ -59,6 +61,11 @@ public class ProfileGenerator {
     @Autowired
     public void setSkillsRepository(WorkerSkillsRepository workerSkillsRepository) {
         this.workerSkillsRepository = workerSkillsRepository;
+    }
+
+    @Autowired
+    public void setWorkerSlotsRepository(WorkerSlotsRepository workerSlotsRepository) {
+        this.workerSlotsRepository = workerSlotsRepository;
     }
 
     private Optional<Profile> getProfile(
@@ -125,9 +132,45 @@ public class ProfileGenerator {
             workerSkills.add(workerSkill.toString());
         }
 
+        ArrayList<WorkerSlots> workerSlotsQuery = this.workerSlotsRepository.findAllByWorkerId(workerId);
+        DaySlots daySlots = new DaySlots();
+        for (WorkerSlots workerSlots : workerSlotsQuery) {
+            switch (workerSlots.getDay()) {
+                case 0: {
+                    daySlots.setMon(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 1: {
+                    daySlots.setTue(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 2: {
+                    daySlots.setWed(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 3: {
+                    daySlots.setThu(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 4: {
+                    daySlots.setFri(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 5: {
+                    daySlots.setSat(new TimeSlots(workerSlots));
+                    break;
+                }
+                case 6: {
+                    daySlots.setSun(new TimeSlots(workerSlots));
+                    break;
+                }
+            }
+        }
+
         return Optional.of(
                 new WorkerProfile(
                     workerProfileQuery.get(),
+                    daySlots,
                     workerDomains,
                     workerEducations,
                     workerSkills

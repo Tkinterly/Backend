@@ -221,8 +221,8 @@ public class Work extends SessionController {
             userBooking.setStatus(2);
             this.userBookingsRepository.save(userBooking);
         } else {
-            this.workBookingsRepository.deleteByBookingId(bookingId);
-            this.userBookingsRepository.deleteByBookingId(bookingId);
+            userBooking.setStatus(3);
+            this.userBookingsRepository.save(userBooking);
         }
 
         return EndpointResponse.passed(true);

@@ -71,6 +71,9 @@ public class Customer extends SessionController {
 
         List<UserBooking> bookings = new ArrayList<UserBooking>();
         for (UserBookings userBooking : userBookings) {
+            if (userBooking.getStatus() > 1) {
+                continue;
+            }
             Optional<WorkBookings> workBookingsQuery = this.workBookingsRepository.findByBookingId(userBooking.getBookingId());
             if (workBookingsQuery.isEmpty()) {
                 continue;
@@ -128,5 +131,49 @@ public class Customer extends SessionController {
         }
 
         return EndpointResponse.passed(new ListingsResponse<>(bookings, bidRequests));
+    }
+
+    @GetMapping("/customer/history")
+    public EndpointResponse<List<UserBooking>> getBookingHistory() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String customerId = sessions.get().getUserId();
+
+        List<UserBookings> userBookings = this.userBookingsRepository.findAllByCustomerId(customerId);
+
+        List<UserBooking> bookings = new ArrayList<UserBooking>();
+        for (UserBookings userBooking : userBookings) {
+            if (userBooking.getStatus() < 2) {
+                continue;
+            }
+            Optional<WorkBookings> workBookingsQuery = this.workBookingsRepository.findByBookingId(userBooking.getBookingId());
+            if (workBookingsQuery.isEmpty()) {
+                continue;
+            }
+
+            WorkBookings workBookingEntry = workBookingsQuery.get();
+
+            if (!workDetailsRepository.existsById(workBookingEntry.getWorkDetailsId())) {
+                continue;
+            }
+
+            String workerId = workBookingEntry.getWorkerId();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+
+            if (workerProfile.isEmpty()) {
+                continue;
+            }
+
+            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get());
+
+            bookings.add(
+                    new UserBooking(userBooking, workBooking)
+            );
+        }
+
+        return EndpointResponse.passed(bookings);
     }
 }

@@ -7,6 +7,7 @@ import com.tinkerly.tinkerly.payloads.*;
 import com.tinkerly.tinkerly.repositories.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
@@ -20,9 +21,10 @@ public class Worker extends SessionController {
     private final BidRequestsRepository bidRequestsRepository;
     private final WorkerDomainsRepository workerDomainsRepository;
     private final WorkDetailsRepository workDetailsRepository;
-    public final WorkerSkillsRepository workerSkillsRepository;
-    public final UserBookingsRepository userBookingsRepository;
-    public final WorkBookingsRepository workBookingsRepository;
+    private final WorkerSkillsRepository workerSkillsRepository;
+    private final UserBookingsRepository userBookingsRepository;
+    private final WorkBookingsRepository workBookingsRepository;
+    private final WorkerSlotsRepository workerSlotsRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -34,7 +36,9 @@ public class Worker extends SessionController {
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
             UserBookingsRepository userBookingsRepository,
-            WorkBookingsRepository workBookingsRepository) {
+            WorkBookingsRepository workBookingsRepository,
+            WorkerSlotsRepository workerSlotsRepository
+    ) {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
         this.workerProfileRepository  = workerProfileRepository;
@@ -44,6 +48,7 @@ public class Worker extends SessionController {
         this.workerSkillsRepository  = workerSkillsRepository;
         this.userBookingsRepository = userBookingsRepository;
         this.workBookingsRepository = workBookingsRepository;
+        this.workerSlotsRepository = workerSlotsRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -83,6 +88,27 @@ public class Worker extends SessionController {
             Optional<Profile> workerProfileQuery = this.profileGenerator.getWorkerProfile(workerId);
 
             if (workerProfileQuery.isEmpty()) {
+                continue;
+            }
+
+            ArrayList<WorkerSlots> timeSlotsQuery = this.workerSlotsRepository.findAllByWorkerId(workerId);
+            boolean skipWorker = false;
+            for (WorkerSlots workerSlots : timeSlotsQuery) {
+                if (workerSlots.getDay() != (LocalDate.now().getDayOfWeek().getValue() - 1)) {
+                    continue;
+                }
+
+                TimeSlots requestedTimeSlots = workerFindRequest.getTimeSlots();
+                boolean isAfterStart = requestedTimeSlots.getStartTime().after(workerSlots.getStartTime());
+                boolean isBeforeEnd = requestedTimeSlots.getEndTime().before(workerSlots.getEndTime());
+
+                if (!isAfterStart || !isBeforeEnd) {
+                    skipWorker = true;
+                    break;
+                }
+            }
+
+            if (skipWorker) {
                 continue;
             }
 
@@ -168,7 +194,7 @@ public class Worker extends SessionController {
                     workBookingEntry.getBookingId()
             );
 
-            if (userBooking.isEmpty()) {
+            if (userBooking.isEmpty() || userBooking.get().getStatus() > 1) {
                 continue;
             }
 

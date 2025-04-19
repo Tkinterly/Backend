@@ -1,0 +1,18 @@
+create table administrator_profiles (ban_authority boolean not null, user_id varchar(255) not null, primary key (user_id));
+create table bid_requests (bidding_tier integer not null, request_id varchar(255) not null, primary key (request_id));
+create table chat_messages (timestamp timestamp(6), content varchar(255), id varchar(255) not null, recipient_id varchar(255), sender_id varchar(255), primary key (id));
+create table credentials (password_hash varchar(255) not null, user_id varchar(255) not null, username varchar(255) not null, primary key (user_id));
+create table customer_profiles (booking_slots integer not null, user_id varchar(255) not null, primary key (user_id));
+create table profiles (access integer not null, average_rating float4 not null, registration_date timestamp(6) not null, avatar_id varchar(255), user_id varchar(255) not null, primary key (user_id));
+create table reports (booking_id varchar(255) not null, reason varchar(255) not null, report_id varchar(255) not null, primary key (report_id));
+create table sessions (expiry timestamp(6) not null, token varchar(255) not null, user_id varchar(255) not null, primary key (user_id));
+create table user_bookings (status integer not null, booking_id varchar(255) not null, customer_id varchar(255) not null, primary key (booking_id));
+create table user_details (age integer not null, nic integer not null, address varchar(255) not null, email varchar(255) not null, name varchar(255) not null, phone varchar(255) not null, user_id varchar(255) not null, primary key (user_id));
+create table work_bookings (bidding_tier integer not null, work_price integer not null, booking_id varchar(255) not null, work_details_id varchar(255) not null, worker_id varchar(255) not null, primary key (booking_id));
+create table work_details (domain integer not null, recommended_price integer not null, id varchar(255) not null, type varchar(255) not null, primary key (id));
+create table worker_domains (domain integer not null, id varchar(255) not null, user_id varchar(255) not null, primary key (id));
+create table worker_education (education varchar(255) not null, id varchar(255) not null, user_id varchar(255) not null, primary key (id));
+create table worker_profiles (banned boolean not null, years_of_experience integer not null, suspension timestamp(6), user_id varchar(255) not null, primary key (user_id));
+create table worker_skills (id varchar(255) not null, skill varchar(255) not null, user_id varchar(255) not null, primary key (id));
+create table worker_slots (day integer not null, end_time timestamp(6) not null, start_time timestamp(6) not null, id varchar(255) not null, worker_id varchar(255) not null, primary key (id));
+create table work_requests (bidding_tier integer not null, customer_id varchar(255) not null, request_id varchar(255) not null, work_details_id varchar(255) not null, worker_id varchar(255) not null, primary key (request_id));
