@@ -8,7 +8,6 @@ import lombok.Setter;
 public class WorkerFindRequest {
     String customerId;
     String workDetailsId;
-    TimeSlots timeSlots;
 
     public WorkerFindRequest() {}
 }

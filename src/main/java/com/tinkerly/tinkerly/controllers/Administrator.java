@@ -22,7 +22,6 @@ public class Administrator extends SessionController {
     private final AdministratorProfileRepository administratorProfileRepository;
     private final WorkBookingsRepository workBookingsRepository;
     private final WorkerProfileRepository workerProfileRepository;
-    private final UserBookingsRepository userBookingsRepository;
 
     public Administrator(
             ProfileGenerator profileGenerator,
@@ -30,8 +29,7 @@ public class Administrator extends SessionController {
             ReportsRepository reportsRepository,
             AdministratorProfileRepository administratorProfileRepository,
             WorkBookingsRepository workBookingsRepository,
-            WorkerProfileRepository workerProfileRepository,
-            UserBookingsRepository userBookingsRepository
+            WorkerProfileRepository workerProfileRepository
 
     ) {
         super(sessionsRepository, profileGenerator);
@@ -39,7 +37,6 @@ public class Administrator extends SessionController {
         this.administratorProfileRepository = administratorProfileRepository;
         this.workBookingsRepository = workBookingsRepository;
         this.workerProfileRepository = workerProfileRepository;
-        this.userBookingsRepository = userBookingsRepository;
     }
 
     @GetMapping("/admin/reports/{page}")
@@ -55,18 +52,17 @@ public class Administrator extends SessionController {
                 continue;
             }
 
-            WorkBookings workBookingEntry = workBookingsQuery.get();
+            WorkBookings workBooking = workBookingsQuery.get();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workBooking.getWorkerId());
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(workBooking.getCustomerId());
 
-            String workerId = workBookingEntry.getWorkerId();
-            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
-
-            if (workerProfile.isEmpty()) {
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
                 continue;
             }
 
             reports.add(new Report(
                     report,
-                    new WorkBooking(workBookingEntry, workerProfile.get())
+                    new WorkBooking(workBooking, workerProfile.get(), customerProfile.get())
             ));
         }
 
@@ -145,7 +141,6 @@ public class Administrator extends SessionController {
 
         this.workerProfileRepository.save(workerProfile);
         this.workBookingsRepository.deleteByBookingId(bookingId);
-        this.userBookingsRepository.deleteByBookingId(bookingId);
         this.reportsRepository.deleteByReportId(reports.getReportId());
 
         return EndpointResponse.passed(true);

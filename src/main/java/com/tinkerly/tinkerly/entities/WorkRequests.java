@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Entity
@@ -24,7 +26,7 @@ public class WorkRequests {
     private String workDetailsId;
 
     @Column(nullable = false)
-    private int biddingTier;
+    private String description;
 
     protected WorkRequests() {}
 
@@ -33,7 +35,7 @@ public class WorkRequests {
         this.customerId = workRequest.getCustomer().getUserId();
         this.workerId = workRequest.getWorkerId();
         this.workDetailsId = workRequest.getWorkDetailsId();
-        this.biddingTier = workRequest.getBiddingTier();
+        this.description = workRequest.getDescription();
     }
 
     public static WorkRequests create() {

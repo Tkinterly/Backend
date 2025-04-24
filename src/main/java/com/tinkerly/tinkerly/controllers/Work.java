@@ -14,40 +14,37 @@ import java.util.*;
 @RestController
 @CrossOrigin
 public class Work extends SessionController {
-    private final BidRequestsRepository bidRequestsRepository;
     private final WorkRequestsRepository workRequestsRepository;
     private final WorkBookingsRepository workBookingsRepository;
-    private final UserBookingsRepository userBookingsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final ReportsRepository reportsRepository;
     private final CustomerProfileRepository customerProfileRepository;
     private final WorkerProfileRepository workerProfileRepository;
+    private final WorkResponsesRepository workResponsesRepository;
 
     public Work(
             ProfileGenerator profileGenerator,
             SessionsRepository sessionsRepository,
-            BidRequestsRepository bidRequestsRepository,
             WorkRequestsRepository workRequestsRepository,
             WorkBookingsRepository workBookingsRepository,
-            UserBookingsRepository userBookingsRepository,
             WorkDetailsRepository workDetailsRepository,
             ReportsRepository reportsRepository,
             CustomerProfileRepository customerProfileRepository,
-            WorkerProfileRepository workerProfileRepository
+            WorkerProfileRepository workerProfileRepository,
+            WorkResponsesRepository workResponsesRepository
     ) {
         super(sessionsRepository, profileGenerator);
-        this.bidRequestsRepository = bidRequestsRepository;
         this.workRequestsRepository = workRequestsRepository;
         this.workBookingsRepository = workBookingsRepository;
-        this.userBookingsRepository = userBookingsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.reportsRepository = reportsRepository;
         this.customerProfileRepository = customerProfileRepository;
         this.workerProfileRepository = workerProfileRepository;
+        this.workResponsesRepository = workResponsesRepository;
     }
 
-    @PostMapping("/work/create")
-    public EndpointResponse<WorkRequests> createWork(@RequestBody WorkRequests workRequest) {
+    @PostMapping("/work/create/request")
+    public EndpointResponse<WorkRequests> createWorkRequest(@RequestBody WorkRequests workRequest) {
         if (!this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
@@ -60,8 +57,30 @@ public class Work extends SessionController {
             return EndpointResponse.failed("Worker not found!");
         }
 
-        if (!this.workDetailsRepository.existsById(workRequest.getWorkDetailsId())) {
+        Optional<WorkDetails> workDetailsQuery = workDetailsRepository.findById(workRequest.getWorkDetailsId());
+
+        if (workDetailsQuery.isEmpty()) {
             return EndpointResponse.failed("Work details not found!");
+        }
+
+        // Three cases
+        boolean endsDuringExistingWork = false;
+        boolean startsDuringExistingWork = false;
+        boolean existsBetweenExistingWork = false;
+
+        List<WorkBookings> workBookingEntries = this.workBookingsRepository.findAllByWorkerId(workRequest.getWorkerId());
+
+        for (WorkBookings workBooking : workBookingEntries) {
+
+            if (workBooking.getStatus() != 1) {
+                continue;
+            }
+
+            Instant bookingStartInstant = workBooking.getStartDate().toInstant();
+            Instant bookingEndInstant = workBooking.getEndDate().toInstant();
+
+
+
         }
 
         workRequest.setRequestId(UUID.randomUUID().toString());
@@ -70,23 +89,32 @@ public class Work extends SessionController {
         return EndpointResponse.passed(workRequest);
     }
 
-    @PostMapping("/work/bid")
-    public EndpointResponse<BidRequest> createBidRequest(@RequestBody BidRequest bidRequest) {
+    @PostMapping("/work/create/response")
+    public EndpointResponse<WorkResponse> createWorkResponse(@RequestBody WorkResponse workResponse) {
         if (!this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
-        if (!this.workRequestsRepository.existsByRequestId(bidRequest.getRequestId())) {
-            return EndpointResponse.failed("Invalid work!");
+        Optional<WorkRequests> workRequestQuery = this.workRequestsRepository.findByRequestId(workResponse.getWorkRequestId());
+
+        if (workRequestQuery.isEmpty()) {
+            return EndpointResponse.failed("Work request not found!");
         }
 
-        BidRequests bidRequests = new BidRequests(
-                bidRequest.getRequestId(),
-                bidRequest.getBiddingTier()
-        );
-        this.bidRequestsRepository.save(bidRequests);
+        WorkRequests workRequest = workRequestQuery.get();
 
-        return EndpointResponse.passed(bidRequest);
+        if (!this.customerProfileRepository.existsByUserId(workRequest.getCustomerId())) {
+            return EndpointResponse.failed("Customer not found!");
+        }
+
+        if (!this.workerProfileRepository.existsByUserId(workRequest.getWorkerId())) {
+            return EndpointResponse.failed("Worker not found!");
+        }
+
+        WorkResponses workResponseEntry = new WorkResponses(workResponse);
+        this.workResponsesRepository.save(workResponseEntry);
+
+        return EndpointResponse.passed(workResponse);
     }
 
     @PostMapping("/work/approve")
@@ -97,23 +125,16 @@ public class Work extends SessionController {
 
         String requestId = workApproval.getRequestId();
         Optional<WorkRequests> workRequestQuery = this.workRequestsRepository.findByRequestId(requestId);
+        Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(requestId);
 
-        if (workRequestQuery.isEmpty()) {
+        if (workRequestQuery.isEmpty() || workResponseQuery.isEmpty()) {
             return EndpointResponse.failed("Invalid work request!");
         }
 
-        System.out.println(workApproval.getIsApproved());
-
         if (workApproval.getIsApproved()) {
             String bookingId = UUID.randomUUID().toString();
-
-            Optional<WorkRequests> workRequestsQuery = this.workRequestsRepository.findByRequestId(requestId);
-
-            if (workRequestsQuery.isEmpty()) {
-                return EndpointResponse.failed("Invalid work request!");
-            }
-
-            WorkRequests workRequests = workRequestsQuery.get();
+            WorkRequests workRequests = workRequestQuery.get();
+            WorkResponses workResponses = workResponseQuery.get();
 
             Optional<Profile> workerProfileQuery = this.profileGenerator
                     .getWorkerProfile(workRequests.getWorkerId());
@@ -130,41 +151,22 @@ public class Work extends SessionController {
                 return EndpointResponse.failed("Invalid work details!");
             }
 
-            Profile workerProfile = workerProfileQuery.get();
-            WorkDetails workDetails = workDetailsQuery.get();
-            Optional<BidRequests> bidRequestsQuery = this.bidRequestsRepository.findByRequestId(requestId);
-
-            int acceptedBiddingTier = bidRequestsQuery
-                    .map(BidRequests::getBiddingTier)
-                    .orElseGet(workRequests::getBiddingTier);
-
-            int roundedPrice = PriceGenerator.generate(
-                    workDetails.getRecommendedPrice(),
-                    workerProfile.getWorkerProfile().getYearsOfExperience(),
-                    workerProfile.getRegistrationDate(),
-                    acceptedBiddingTier
-            );
-
-            UserBookings userBookingEntry = new UserBookings(
-                    bookingId,
-                    workRequests.getCustomerId(),
-                    1
-            );
-
             WorkBookings workBookingEntry = new WorkBookings(
                     bookingId,
                     workRequests.getWorkDetailsId(),
                     workRequests.getWorkerId(),
-                    acceptedBiddingTier,
-                    roundedPrice
+                    workRequests.getCustomerId(),
+                    workResponses.getCost(),
+                    workResponses.getStartDate(),
+                    workResponses.getEndDate(),
+                    1
             );
 
-            this.userBookingsRepository.save(userBookingEntry);
             this.workBookingsRepository.save(workBookingEntry);
         }
 
         this.workRequestsRepository.deleteByRequestId(requestId);
-        this.bidRequestsRepository.deleteByRequestId(requestId);
+        this.workResponsesRepository.deleteByWorkRequestId(requestId);
 
         return EndpointResponse.passed(true);
     }
@@ -188,9 +190,18 @@ public class Work extends SessionController {
             return EndpointResponse.failed("Invalid worker!");
         }
 
+        Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(
+                workBookingsQuery.get().getCustomerId()
+        );
+
+        if (customerProfile.isEmpty()) {
+            return EndpointResponse.failed("Invalid customer!");
+        }
+
         return EndpointResponse.passed(new WorkBooking(
                 workBookingsQuery.get(),
-                workerProfile.get()
+                workerProfile.get(),
+                customerProfile.get()
         ));
     }
 
@@ -201,13 +212,13 @@ public class Work extends SessionController {
         }
 
         String bookingId = workCompletion.getBookingId();
-        Optional<UserBookings> userBookingEntry = this.userBookingsRepository.findByBookingId(bookingId);
+        Optional<WorkBookings> workBookingEntry = this.workBookingsRepository.findByBookingId(bookingId);
 
-        if (userBookingEntry.isEmpty()) {
+        if (workBookingEntry.isEmpty()) {
             return EndpointResponse.failed("Invalid booking!");
         }
 
-        UserBookings userBooking = userBookingEntry.get();
+        WorkBookings workBooking = workBookingEntry.get();
 
         if (workCompletion.getIsReported()) {
             Reports report = new Reports(
@@ -218,12 +229,11 @@ public class Work extends SessionController {
 
             this.reportsRepository.save(report);
 
-            userBooking.setStatus(2);
-            this.userBookingsRepository.save(userBooking);
+            workBooking.setStatus(2);
         } else {
-            userBooking.setStatus(3);
-            this.userBookingsRepository.save(userBooking);
+            workBooking.setStatus(3);
         }
+        this.workBookingsRepository.save(workBooking);
 
         return EndpointResponse.passed(true);
     }

@@ -22,9 +22,7 @@ public class Worker extends SessionController {
     private final WorkerDomainsRepository workerDomainsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final WorkerSkillsRepository workerSkillsRepository;
-    private final UserBookingsRepository userBookingsRepository;
     private final WorkBookingsRepository workBookingsRepository;
-    private final WorkerSlotsRepository workerSlotsRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -35,9 +33,7 @@ public class Worker extends SessionController {
             WorkerDomainsRepository workerDomainsRepository,
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
-            UserBookingsRepository userBookingsRepository,
-            WorkBookingsRepository workBookingsRepository,
-            WorkerSlotsRepository workerSlotsRepository
+            WorkBookingsRepository workBookingsRepository
     ) {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
@@ -46,9 +42,7 @@ public class Worker extends SessionController {
         this.workerDomainsRepository = workerDomainsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.workerSkillsRepository  = workerSkillsRepository;
-        this.userBookingsRepository = userBookingsRepository;
         this.workBookingsRepository = workBookingsRepository;
-        this.workerSlotsRepository = workerSlotsRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -88,27 +82,6 @@ public class Worker extends SessionController {
             Optional<Profile> workerProfileQuery = this.profileGenerator.getWorkerProfile(workerId);
 
             if (workerProfileQuery.isEmpty()) {
-                continue;
-            }
-
-            ArrayList<WorkerSlots> timeSlotsQuery = this.workerSlotsRepository.findAllByWorkerId(workerId);
-            boolean skipWorker = false;
-            for (WorkerSlots workerSlots : timeSlotsQuery) {
-                if (workerSlots.getDay() != (LocalDate.now().getDayOfWeek().getValue() - 1)) {
-                    continue;
-                }
-
-                TimeSlots requestedTimeSlots = workerFindRequest.getTimeSlots();
-                boolean isAfterStart = requestedTimeSlots.getStartTime().after(workerSlots.getStartTime());
-                boolean isBeforeEnd = requestedTimeSlots.getEndTime().before(workerSlots.getEndTime());
-
-                if (!isAfterStart || !isBeforeEnd) {
-                    skipWorker = true;
-                    break;
-                }
-            }
-
-            if (skipWorker) {
                 continue;
             }
 
@@ -172,40 +145,29 @@ public class Worker extends SessionController {
     }
 
     @GetMapping("/worker/bookings")
-    public EndpointResponse<List<UserBooking>> getBookings() {
+    public EndpointResponse<List<WorkBooking>> getBookings() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
         String workerId = sessions.get().getUserId();
+        List<WorkBookings> workBookingEntries = this.workBookingsRepository.findAllByWorkerId(workerId);
+        List<WorkBooking> workBookings = new ArrayList<>();
 
-        List<WorkBookings> workBookings = this.workBookingsRepository.findAllByWorkerId(workerId);
-
-        List<UserBooking> bookings = new ArrayList<UserBooking>();
-        for (WorkBookings workBookingEntry : workBookings) {
+        for (WorkBookings workBookingEntry : workBookingEntries) {
             Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(workBookingEntry.getCustomerId());
 
-            if (workerProfile.isEmpty()) {
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
                 continue;
             }
 
-            Optional<UserBookings> userBooking = this.userBookingsRepository.findByBookingId(
-                    workBookingEntry.getBookingId()
-            );
-
-            if (userBooking.isEmpty() || userBooking.get().getStatus() > 1) {
-                continue;
-            }
-
-            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get());
-
-            bookings.add(
-                    new UserBooking(userBooking.get(), workBooking)
-            );
+            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get(), customerProfile.get());
+            workBookings.add(workBooking);
         }
 
-        return EndpointResponse.passed(bookings);
+        return EndpointResponse.passed(workBookings);
     }
 
     @GetMapping("/workers")

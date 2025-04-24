@@ -9,27 +9,25 @@ import lombok.Setter;
 public class WorkBooking {
     String bookingId;
     String workDetailsId;
-    int biddingTier;
-    int workPrice;
-
-    @Setter
+    double workPrice;
     Profile workerProfile;
+    Profile customerProfile;
 
-    public WorkBooking(WorkBookings workBooking, Profile workerProfile) {
+    public WorkBooking(WorkBookings workBooking, Profile workerProfile, Profile customerProfile) {
         this.bookingId = workBooking.getBookingId();
-        this.biddingTier = workBooking.getBiddingTier();
         this.workDetailsId = workBooking.getWorkDetailsId();
         this.workPrice = workBooking.getWorkPrice();
         this.workerProfile = workerProfile;
+        this.customerProfile = customerProfile;
     }
 
     public WorkBooking() {}
 
-    public WorkBooking(String bookingId, String workDetailsId, int biddingTier, int workPrice, Profile workerProfile) {
+    public WorkBooking(String bookingId, String workDetailsId, double workPrice, Profile workerProfile, Profile customerProfile) {
         this.bookingId = bookingId;
         this.workDetailsId = workDetailsId;
-        this.biddingTier = biddingTier;
         this.workPrice = workPrice;
         this.workerProfile = workerProfile;
+        this.customerProfile = customerProfile;
     }
 }

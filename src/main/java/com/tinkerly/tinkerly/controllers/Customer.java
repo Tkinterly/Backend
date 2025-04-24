@@ -19,33 +19,32 @@ import java.util.Optional;
 @CrossOrigin
 public class Customer extends SessionController {
 
-    private final UserBookingsRepository userBookingsRepository;
     private final WorkBookingsRepository workBookingsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final WorkRequestsRepository workRequestsRepository;
     private final BidRequestsRepository bidRequestsRepository;
+    private final WorkResponsesRepository workResponsesRepository;
 
     public Customer(
             ProfileGenerator profileGenerator,
             SessionsRepository sessionsRepository,
-            UserBookingsRepository userBookingsRepository,
             WorkBookingsRepository workBookingsRepository,
             WorkDetailsRepository workDetailsRepository,
             WorkRequestsRepository workRequestsRepository,
-            BidRequestsRepository bidRequestsRepository
+            BidRequestsRepository bidRequestsRepository,
+            WorkResponsesRepository workResponsesRepository
     ) {
         super(sessionsRepository, profileGenerator);
-        this.userBookingsRepository = userBookingsRepository;
         this.workBookingsRepository = workBookingsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.workRequestsRepository = workRequestsRepository;
         this.bidRequestsRepository = bidRequestsRepository;
+        this.workResponsesRepository = workResponsesRepository;
     }
 
     @GetMapping("/customer/{customerId}")
     public EndpointResponse<Profile> getProfile(@PathVariable String customerId) {
         if (!this.isValidSession()) {
-            // Invalid session
             return EndpointResponse.failed("Invalid session!");
         }
 
@@ -58,45 +57,65 @@ public class Customer extends SessionController {
         return EndpointResponse.passed(customerProfile.get());
     }
 
-    @GetMapping("/customer/bookings")
-    public EndpointResponse<ListingsResponse<UserBooking>> getBookings() {
+    @GetMapping("/customer/responses")
+    public EndpointResponse<List<WorkResponse>> getWorkResponses() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
         }
 
         String customerId = sessions.get().getUserId();
+        Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
 
-        List<UserBookings> userBookings = this.userBookingsRepository.findAllByCustomerId(customerId);
+        if (customerProfile.isEmpty()) {
+            return EndpointResponse.failed("Invalid customer!");
+        }
 
-        List<UserBooking> bookings = new ArrayList<UserBooking>();
-        for (UserBookings userBooking : userBookings) {
-            if (userBooking.getStatus() > 1) {
-                continue;
-            }
-            Optional<WorkBookings> workBookingsQuery = this.workBookingsRepository.findByBookingId(userBooking.getBookingId());
-            if (workBookingsQuery.isEmpty()) {
-                continue;
-            }
+        List<WorkResponse> workResponses = new ArrayList<>();
+        List<WorkRequests> workRequestEntries = this.workRequestsRepository.findAllByCustomerId(customerId);
 
-            WorkBookings workBookingEntry = workBookingsQuery.get();
+        for (WorkRequests workRequest : workRequestEntries) {
+            Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
 
-            if (!workDetailsRepository.existsById(workBookingEntry.getWorkDetailsId())) {
+            if (workResponseQuery.isEmpty()) {
                 continue;
             }
 
-            String workerId = workBookingEntry.getWorkerId();
+            workResponses.add(new WorkResponse(workResponseQuery.get()));
+        }
+
+        return EndpointResponse.passed(workResponses);
+    }
+
+    @GetMapping("/customer/bookings")
+    public EndpointResponse<ListingsResponse<WorkBooking>> getBookings() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String customerId = sessions.get().getUserId();
+        List<WorkBookings> workBookingEntries = this.workBookingsRepository.findAllByCustomerId(customerId);
+        List<WorkBooking> workBookings = new ArrayList<>();
+
+        for (WorkBookings workBooking : workBookingEntries) {
+            if (workBooking.getStatus() > 1) {
+                continue;
+            }
+
+            if (!workDetailsRepository.existsById(workBooking.getWorkDetailsId())) {
+                continue;
+            }
+
+            String workerId = workBooking.getWorkerId();
             Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
 
-            if (workerProfile.isEmpty()) {
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
                 continue;
             }
 
-            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get());
-
-            bookings.add(
-                    new UserBooking(userBooking, workBooking)
-            );
+            workBookings.add(new WorkBooking(workBooking, workerProfile.get(), customerProfile.get()));
         }
 
         List<BidRequest> bidRequests = new ArrayList<>();
@@ -104,10 +123,10 @@ public class Customer extends SessionController {
 
         for (WorkRequests workRequest : workRequests) {
             Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workRequest.getWorkDetailsId());
-
             Profile workerProfile = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId()).orElse(null);
+            Profile customerProfile = this.profileGenerator.getCustomerProfile(customerId).orElse(null);
 
-            if (workDetailsQuery.isPresent() && workerProfile != null) {
+            if (workDetailsQuery.isPresent() && workerProfile != null && customerProfile != null) {
                 String bookingId = workRequest.getRequestId();
                 int price = PriceGenerator.generate(
                         workDetailsQuery.get().getRecommendedPrice(),
@@ -118,23 +137,23 @@ public class Customer extends SessionController {
                 WorkBooking workBooking = new WorkBooking(
                         bookingId,
                         workRequest.getWorkDetailsId(),
-                        workRequest.getBiddingTier(),
                         price,
-                        workerProfile
+                        workerProfile,
+                        customerProfile
                 );
 
-                bookings.add(new UserBooking(bookingId, 0, workBooking));
+                workBookings.add(workBooking);
             }
 
             Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
             bidRequest.ifPresent(requests -> bidRequests.add(new BidRequest(requests)));
         }
 
-        return EndpointResponse.passed(new ListingsResponse<>(bookings, bidRequests));
+        return EndpointResponse.passed(new ListingsResponse<>(workBookings, bidRequests));
     }
 
     @GetMapping("/customer/history")
-    public EndpointResponse<List<UserBooking>> getBookingHistory() {
+    public EndpointResponse<List<WorkBooking>> getBookingHistory() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
@@ -142,19 +161,13 @@ public class Customer extends SessionController {
 
         String customerId = sessions.get().getUserId();
 
-        List<UserBookings> userBookings = this.userBookingsRepository.findAllByCustomerId(customerId);
+        List<WorkBookings> workBookingEntries = this.workBookingsRepository.findAllByCustomerId(customerId);
+        List<WorkBooking> bookings = new ArrayList<>();
 
-        List<UserBooking> bookings = new ArrayList<UserBooking>();
-        for (UserBookings userBooking : userBookings) {
-            if (userBooking.getStatus() < 2) {
+        for (WorkBookings workBookingEntry : workBookingEntries) {
+            if (workBookingEntry.getStatus() < 2) {
                 continue;
             }
-            Optional<WorkBookings> workBookingsQuery = this.workBookingsRepository.findByBookingId(userBooking.getBookingId());
-            if (workBookingsQuery.isEmpty()) {
-                continue;
-            }
-
-            WorkBookings workBookingEntry = workBookingsQuery.get();
 
             if (!workDetailsRepository.existsById(workBookingEntry.getWorkDetailsId())) {
                 continue;
@@ -162,16 +175,15 @@ public class Customer extends SessionController {
 
             String workerId = workBookingEntry.getWorkerId();
             Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
 
-            if (workerProfile.isEmpty()) {
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
                 continue;
             }
 
-            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get());
+            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get(), customerProfile.get());
 
-            bookings.add(
-                    new UserBooking(userBooking, workBooking)
-            );
+            bookings.add(workBooking);
         }
 
         return EndpointResponse.passed(bookings);

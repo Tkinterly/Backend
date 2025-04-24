@@ -3,6 +3,7 @@ package com.tinkerly.tinkerly.payloads;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -10,6 +11,7 @@ import java.util.List;
 public class WorkerProposal {
     Profile workerProfile;
     List<Integer> recommendedPrice;
+    Date busyTillDate;
 
     public WorkerProposal() {}
 
