@@ -224,15 +224,17 @@ public class Work extends SessionController {
             Reports report = new Reports(
                     UUID.randomUUID().toString(),
                     bookingId,
-                    workCompletion.getReportReason()
+                    workCompletion.getReview()
             );
 
             this.reportsRepository.save(report);
 
             workBooking.setStatus(2);
         } else {
+            workBooking.setReview(workCompletion.getReview());
             workBooking.setStatus(3);
         }
+
         this.workBookingsRepository.save(workBooking);
 
         return EndpointResponse.passed(true);

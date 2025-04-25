@@ -8,7 +8,7 @@ import lombok.Setter;
 public class WorkCompletion {
     String bookingId;
     Boolean isReported;
-    String reportReason;
+    String review;
 
     public WorkCompletion() {}
 }

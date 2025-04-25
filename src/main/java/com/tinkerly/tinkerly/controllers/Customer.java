@@ -22,7 +22,6 @@ public class Customer extends SessionController {
     private final WorkBookingsRepository workBookingsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final WorkRequestsRepository workRequestsRepository;
-    private final BidRequestsRepository bidRequestsRepository;
     private final WorkResponsesRepository workResponsesRepository;
 
     public Customer(
@@ -31,14 +30,12 @@ public class Customer extends SessionController {
             WorkBookingsRepository workBookingsRepository,
             WorkDetailsRepository workDetailsRepository,
             WorkRequestsRepository workRequestsRepository,
-            BidRequestsRepository bidRequestsRepository,
             WorkResponsesRepository workResponsesRepository
     ) {
         super(sessionsRepository, profileGenerator);
         this.workBookingsRepository = workBookingsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.workRequestsRepository = workRequestsRepository;
-        this.bidRequestsRepository = bidRequestsRepository;
         this.workResponsesRepository = workResponsesRepository;
     }
 
@@ -88,7 +85,7 @@ public class Customer extends SessionController {
     }
 
     @GetMapping("/customer/bookings")
-    public EndpointResponse<ListingsResponse<WorkBooking>> getBookings() {
+    public EndpointResponse<List<WorkBooking>> getBookings() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
@@ -118,38 +115,38 @@ public class Customer extends SessionController {
             workBookings.add(new WorkBooking(workBooking, workerProfile.get(), customerProfile.get()));
         }
 
-        List<BidRequest> bidRequests = new ArrayList<>();
         List<WorkRequests> workRequests = this.workRequestsRepository.findAllByCustomerId(customerId);
 
         for (WorkRequests workRequest : workRequests) {
             Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workRequest.getWorkDetailsId());
             Profile workerProfile = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId()).orElse(null);
             Profile customerProfile = this.profileGenerator.getCustomerProfile(customerId).orElse(null);
+            Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
 
-            if (workDetailsQuery.isPresent() && workerProfile != null && customerProfile != null) {
-                String bookingId = workRequest.getRequestId();
-                int price = PriceGenerator.generate(
-                        workDetailsQuery.get().getRecommendedPrice(),
-                        workerProfile.getWorkerProfile().getYearsOfExperience(),
-                        workerProfile.getRegistrationDate()
-                );
-
-                WorkBooking workBooking = new WorkBooking(
-                        bookingId,
-                        workRequest.getWorkDetailsId(),
-                        price,
-                        workerProfile,
-                        customerProfile
-                );
-
-                workBookings.add(workBooking);
+            if (workResponseQuery.isEmpty() || workDetailsQuery.isEmpty() || customerProfile == null || workerProfile == null) {
+                continue;
             }
 
-            Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
-            bidRequest.ifPresent(requests -> bidRequests.add(new BidRequest(requests)));
+            String bookingId = workRequest.getRequestId();
+            WorkResponses workResponse = workResponseQuery.get();
+
+            WorkBooking workBooking = new WorkBooking(
+                    bookingId,
+                    workRequest.getWorkDetailsId(),
+                    workResponse.getCost(),
+                    workerProfile,
+                    customerProfile,
+                    workResponse.getStartDate(),
+                    workResponse.getEndDate(),
+                    0,
+                    workRequest.getDescription(),
+                    null
+            );
+
+            workBookings.add(workBooking);
         }
 
-        return EndpointResponse.passed(new ListingsResponse<>(workBookings, bidRequests));
+        return EndpointResponse.passed(workBookings);
     }
 
     @GetMapping("/customer/history")

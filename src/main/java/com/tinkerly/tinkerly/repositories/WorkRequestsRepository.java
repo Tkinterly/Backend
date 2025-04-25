@@ -1,6 +1,5 @@
 package com.tinkerly.tinkerly.repositories;
 
-import com.tinkerly.tinkerly.entities.BidRequests;
 import com.tinkerly.tinkerly.entities.WorkRequests;
 import jakarta.transaction.Transactional;
 import org.springframework.data.repository.CrudRepository;

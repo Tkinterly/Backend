@@ -18,7 +18,6 @@ import java.util.*;
 public class Worker extends SessionController {
     private final WorkRequestsRepository workRequestsRepository;
     private final WorkerProfileRepository workerProfileRepository;
-    private final BidRequestsRepository bidRequestsRepository;
     private final WorkerDomainsRepository workerDomainsRepository;
     private final WorkDetailsRepository workDetailsRepository;
     private final WorkerSkillsRepository workerSkillsRepository;
@@ -29,7 +28,6 @@ public class Worker extends SessionController {
             ProfileGenerator profileGenerator,
             WorkRequestsRepository workRequestsRepository,
             WorkerProfileRepository workerProfileRepository,
-            BidRequestsRepository bidRequestsRepository,
             WorkerDomainsRepository workerDomainsRepository,
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
@@ -38,7 +36,6 @@ public class Worker extends SessionController {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
         this.workerProfileRepository  = workerProfileRepository;
-        this.bidRequestsRepository = bidRequestsRepository;
         this.workerDomainsRepository = workerDomainsRepository;
         this.workDetailsRepository = workDetailsRepository;
         this.workerSkillsRepository  = workerSkillsRepository;
@@ -109,7 +106,7 @@ public class Worker extends SessionController {
     }
 
     @GetMapping("/worker/requests")
-    public EndpointResponse<ListingsResponse<WorkRequest>> getRequests() {
+    public EndpointResponse<List<WorkRequest>> getRequests() {
         Optional<Sessions> sessions = this.getSession();
         if (sessions.isEmpty() || !this.isValidSession()) {
             return EndpointResponse.failed("Invalid session!");
@@ -123,7 +120,6 @@ public class Worker extends SessionController {
 
         List<WorkRequests> workRequestsQuery = this.workRequestsRepository.findAllByWorkerId(workerId);
         List<WorkRequest> workRequests = new ArrayList<>();
-        List<BidRequest> bidRequests = new ArrayList<>();
 
         for (WorkRequests workRequest : workRequestsQuery) {
             Optional<Profile> customer = this.profileGenerator.getCustomerProfile(workRequest.getCustomerId());
@@ -131,17 +127,9 @@ public class Worker extends SessionController {
                 continue;
             }
             workRequests.add(new WorkRequest(workRequest, customer.get()));
-
-            Optional<BidRequests> bidRequest = this.bidRequestsRepository.findByRequestId(workRequest.getRequestId());
-
-            if (bidRequest.isEmpty()) {
-                continue;
-            }
-
-            bidRequests.add(new BidRequest(bidRequest.get()));
         }
 
-        return EndpointResponse.passed(new ListingsResponse<>(workRequests, bidRequests));
+        return EndpointResponse.passed(workRequests);
     }
 
     @GetMapping("/worker/bookings")

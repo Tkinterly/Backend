@@ -39,6 +39,8 @@ public class WorkBookings {
     @Column(nullable = false)
     private String description;
 
+    private String review;
+
     protected  WorkBookings() {}
 
     public WorkBookings(
@@ -59,5 +61,6 @@ public class WorkBookings {
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
+        this.review = null;
     }
 }

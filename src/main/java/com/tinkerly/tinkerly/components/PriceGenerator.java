@@ -1,7 +1,5 @@
 package com.tinkerly.tinkerly.components;
 
-import com.tinkerly.tinkerly.entities.BidRequests;
-
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
