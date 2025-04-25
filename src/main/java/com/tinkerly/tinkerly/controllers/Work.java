@@ -159,7 +159,8 @@ public class Work extends SessionController {
                     workResponses.getCost(),
                     workResponses.getStartDate(),
                     workResponses.getEndDate(),
-                    1
+                    1,
+                    workRequests.getDescription()
             );
 
             this.workBookingsRepository.save(workBookingEntry);

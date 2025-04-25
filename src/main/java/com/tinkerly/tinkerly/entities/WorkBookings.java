@@ -51,7 +51,8 @@ public class WorkBookings {
        double workPrice,
        Date startDate,
        Date endDate,
-       int status
+       int status,
+       String description
     ) {
         this.bookingId = bookingId;
         this.workDetailsId = workDetailsId;
@@ -61,6 +62,7 @@ public class WorkBookings {
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
+        this.description = description;
         this.review = null;
     }
 }
