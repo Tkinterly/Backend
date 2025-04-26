@@ -149,6 +149,35 @@ public class Customer extends SessionController {
         return EndpointResponse.passed(workBookings);
     }
 
+    @GetMapping("/customer/requests")
+    public EndpointResponse<List<WorkRequest>> getWorkRequests() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String customerId = sessions.get().getUserId();
+
+        List<WorkRequests> workRequestEntries = this.workRequestsRepository.findAllByCustomerId(customerId);
+        List<WorkRequest> workRequests = new ArrayList<>();
+        for (WorkRequests workRequest : workRequestEntries) {
+            if (!workDetailsRepository.existsById(workRequest.getWorkDetailsId())) {
+                continue;
+            }
+
+            String workerId = workRequest.getWorkerId();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
+                continue;
+            }
+
+            workRequests.add(new WorkRequest());
+        }
+
+        return EndpointResponse.passed(workRequests);
+    }
+
     @GetMapping("/customer/history")
     public EndpointResponse<List<WorkBooking>> getBookingHistory() {
         Optional<Sessions> sessions = this.getSession();

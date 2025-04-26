@@ -11,6 +11,7 @@ public class WorkResponse {
     private Date startDate;
     private Date endDate;
     private double cost;
+    private int status;
 
     public WorkResponse() {}
 
@@ -19,5 +20,6 @@ public class WorkResponse {
         this.startDate = workResponse.getStartDate();
         this.endDate = workResponse.getEndDate();
         this.cost = workResponse.getCost();
+        this.status = workResponse.getStatus();
     }
 }

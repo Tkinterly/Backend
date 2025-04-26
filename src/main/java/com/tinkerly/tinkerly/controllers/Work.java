@@ -127,14 +127,23 @@ public class Work extends SessionController {
         Optional<WorkRequests> workRequestQuery = this.workRequestsRepository.findByRequestId(requestId);
         Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(requestId);
 
-        if (workRequestQuery.isEmpty() || workResponseQuery.isEmpty()) {
+        if (workRequestQuery.isEmpty()) {
             return EndpointResponse.failed("Invalid work request!");
         }
 
+        WorkRequests workRequests = workRequestQuery.get();
+        if (workResponseQuery.isEmpty()) {
+            workRequests.setStatus(2);
+            this.workRequestsRepository.save(workRequests);
+            return EndpointResponse.passed(true);
+        }
+
+        WorkResponses workResponses = workResponseQuery.get();
+        workRequests.setStatus(1);
+        this.workRequestsRepository.save(workRequests);
+
         if (workApproval.getIsApproved()) {
             String bookingId = UUID.randomUUID().toString();
-            WorkRequests workRequests = workRequestQuery.get();
-            WorkResponses workResponses = workResponseQuery.get();
 
             Optional<Profile> workerProfileQuery = this.profileGenerator
                     .getWorkerProfile(workRequests.getWorkerId());
@@ -163,11 +172,12 @@ public class Work extends SessionController {
                     workRequests.getDescription()
             );
 
+            workResponses.setStatus(1);
             this.workBookingsRepository.save(workBookingEntry);
+        } else {
+            workResponses.setStatus(2);
+            this.workResponsesRepository.save(workResponses);
         }
-
-        this.workRequestsRepository.deleteByRequestId(requestId);
-        this.workResponsesRepository.deleteByWorkRequestId(requestId);
 
         return EndpointResponse.passed(true);
     }

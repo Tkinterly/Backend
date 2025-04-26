@@ -28,6 +28,9 @@ public class WorkRequests {
     @Column(nullable = false)
     private String description;
 
+    @Column(nullable = false)
+    private int status;
+
     protected WorkRequests() {}
 
     public WorkRequests(WorkRequest workRequest) {
@@ -36,6 +39,7 @@ public class WorkRequests {
         this.workerId = workRequest.getWorkerId();
         this.workDetailsId = workRequest.getWorkDetailsId();
         this.description = workRequest.getDescription();
+        this.status = workRequest.getStatus();
     }
 
     public static WorkRequests create() {
