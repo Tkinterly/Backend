@@ -18,7 +18,6 @@ public class WorkBooking {
     Date endDate;
     int status;
     String description;
-    String review;
 
     public WorkBooking(WorkBookings workBooking, Profile workerProfile, Profile customerProfile) {
         this.bookingId = workBooking.getBookingId();
@@ -30,7 +29,6 @@ public class WorkBooking {
         this.endDate = workBooking.getEndDate();
         this.status = workBooking.getStatus();
         this.description = workBooking.getDescription();
-        this.review = workBooking.getReview();
     }
 
     public WorkBooking() {}
@@ -44,8 +42,7 @@ public class WorkBooking {
             Date startDate,
             Date endDate,
             int status,
-            String description,
-            String review
+            String description
     ) {
         this.bookingId = bookingId;
         this.workDetailsId = workDetailsId;
@@ -56,6 +53,5 @@ public class WorkBooking {
         this.endDate = endDate;
         this.status = status;
         this.description = description;
-        this.review = review;
     }
 }

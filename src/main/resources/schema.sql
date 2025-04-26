@@ -6,11 +6,12 @@ create table profiles (access integer not null, average_rating float4 not null, 
 create table reports (booking_id varchar(255) not null, reason varchar(255) not null, report_id varchar(255) not null, primary key (report_id));
 create table sessions (expiry timestamp(6) not null, token varchar(255) not null, user_id varchar(255) not null, primary key (user_id));
 create table user_details (age integer not null, nic integer not null, address varchar(255) not null, email varchar(255) not null, name varchar(255) not null, phone varchar(255) not null, user_id varchar(255) not null, primary key (user_id));
-create table work_bookings (status integer not null, work_price float(53) not null, end_date timestamp(6) not null, start_date timestamp(6) not null, booking_id varchar(255) not null, customer_id varchar(255) not null, description varchar(255) not null, review varchar(255), work_details_id varchar(255) not null, worker_id varchar(255) not null, primary key (booking_id));
+create table work_bookings (status integer not null, work_price float(53) not null, end_date timestamp(6) not null, start_date timestamp(6) not null, booking_id varchar(255) not null, customer_id varchar(255) not null, description varchar(255) not null, work_details_id varchar(255) not null, worker_id varchar(255) not null, primary key (booking_id));
 create table work_details (domain integer not null, recommended_price integer not null, id varchar(255) not null, type varchar(255) not null, primary key (id));
 create table worker_domains (domain integer not null, id varchar(255) not null, user_id varchar(255) not null, primary key (id));
 create table worker_education (education varchar(255) not null, id varchar(255) not null, user_id varchar(255) not null, primary key (id));
 create table worker_profiles (banned boolean not null, years_of_experience integer not null, suspension timestamp(6), user_id varchar(255) not null, primary key (user_id));
+create table worker_reviews (domain integer not null, id varchar(255) not null, review varchar(255) not null, work_booking_id varchar(255) not null, worker_id varchar(255) not null, primary key (id));
 create table worker_skills (id varchar(255) not null, skill varchar(255) not null, user_id varchar(255) not null, primary key (id));
 create table work_requests (status integer not null, customer_id varchar(255) not null, description varchar(255) not null, request_id varchar(255) not null, work_details_id varchar(255) not null, worker_id varchar(255) not null, primary key (request_id));
 create table work_responses (cost float(53) not null, status integer not null, end_date timestamp(6) not null, start_date timestamp(6) not null, work_request_id varchar(255) not null, primary key (work_request_id));

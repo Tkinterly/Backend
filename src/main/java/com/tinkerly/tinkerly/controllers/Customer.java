@@ -139,8 +139,7 @@ public class Customer extends SessionController {
                     workResponse.getStartDate(),
                     workResponse.getEndDate(),
                     0,
-                    workRequest.getDescription(),
-                    null
+                    workRequest.getDescription()
             );
 
             workBookings.add(workBooking);

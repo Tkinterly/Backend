@@ -22,6 +22,7 @@ public class Worker extends SessionController {
     private final WorkDetailsRepository workDetailsRepository;
     private final WorkerSkillsRepository workerSkillsRepository;
     private final WorkBookingsRepository workBookingsRepository;
+    private final WorkerReviewsRepository workerReviewsRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -31,7 +32,8 @@ public class Worker extends SessionController {
             WorkerDomainsRepository workerDomainsRepository,
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
-            WorkBookingsRepository workBookingsRepository
+            WorkBookingsRepository workBookingsRepository,
+            WorkerReviewsRepository workerReviewsRepository
     ) {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
@@ -40,6 +42,7 @@ public class Worker extends SessionController {
         this.workDetailsRepository = workDetailsRepository;
         this.workerSkillsRepository  = workerSkillsRepository;
         this.workBookingsRepository = workBookingsRepository;
+        this.workerReviewsRepository = workerReviewsRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -156,6 +159,19 @@ public class Worker extends SessionController {
         }
 
         return EndpointResponse.passed(workBookings);
+    }
+
+    @GetMapping("/worker/reviews")
+    public EndpointResponse<List<WorkerReviews>> getReviews() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String workerId = sessions.get().getUserId();
+        List<WorkerReviews> workerReviewEntries = this.workerReviewsRepository.findByWorkerId(workerId);
+
+        return EndpointResponse.passed(workerReviewEntries);
     }
 
     @GetMapping("/workers")

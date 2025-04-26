@@ -21,6 +21,7 @@ public class Work extends SessionController {
     private final CustomerProfileRepository customerProfileRepository;
     private final WorkerProfileRepository workerProfileRepository;
     private final WorkResponsesRepository workResponsesRepository;
+    private final WorkerReviewsRepository workerReviewsRepository;
 
     public Work(
             ProfileGenerator profileGenerator,
@@ -31,7 +32,8 @@ public class Work extends SessionController {
             ReportsRepository reportsRepository,
             CustomerProfileRepository customerProfileRepository,
             WorkerProfileRepository workerProfileRepository,
-            WorkResponsesRepository workResponsesRepository
+            WorkResponsesRepository workResponsesRepository,
+            WorkerReviewsRepository workerReviewsRepository
     ) {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
@@ -41,6 +43,7 @@ public class Work extends SessionController {
         this.customerProfileRepository = customerProfileRepository;
         this.workerProfileRepository = workerProfileRepository;
         this.workResponsesRepository = workResponsesRepository;
+        this.workerReviewsRepository = workerReviewsRepository;
     }
 
     @PostMapping("/work/create/request")
@@ -231,6 +234,11 @@ public class Work extends SessionController {
 
         WorkBookings workBooking = workBookingEntry.get();
 
+        Optional<WorkDetails> workDetailsEntry = this.workDetailsRepository.findById(workBooking.getWorkDetailsId());
+        if (workDetailsEntry.isEmpty()) {
+            return EndpointResponse.failed("Invalid work details!");
+        }
+
         if (workCompletion.getIsReported()) {
             Reports report = new Reports(
                     UUID.randomUUID().toString(),
@@ -242,7 +250,15 @@ public class Work extends SessionController {
 
             workBooking.setStatus(2);
         } else {
-            workBooking.setReview(workCompletion.getReview());
+            WorkerReviews workerReview = new WorkerReviews(
+                    workBooking.getWorkerId(),
+                    bookingId,
+                    workDetailsEntry.get().getDomain(),
+                    workCompletion.getReview()
+            );
+
+            this.workerReviewsRepository.save(workerReview);
+
             workBooking.setStatus(3);
         }
 
