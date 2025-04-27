@@ -126,10 +126,11 @@ public class Worker extends SessionController {
 
         for (WorkRequests workRequest : workRequestsQuery) {
             Optional<Profile> customer = this.profileGenerator.getCustomerProfile(workRequest.getCustomerId());
-            if (customer.isEmpty()) {
+            Optional<Profile> worker = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId());
+            if (customer.isEmpty() || worker.isEmpty()) {
                 continue;
             }
-            workRequests.add(new WorkRequest(workRequest, customer.get()));
+            workRequests.add(new WorkRequest(workRequest, customer.get(), worker.get()));
         }
 
         return EndpointResponse.passed(workRequests);

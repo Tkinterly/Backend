@@ -11,19 +11,19 @@ import java.util.Date;
 public class WorkRequest {
     String requestId;
     Profile customer;
-    String workerId;
+    Profile worker;
     String workDetailsId;
     String description;
     int status;
 
-    public WorkRequest(WorkRequests workRequests, Profile customer) {
+    public WorkRequest(WorkRequests workRequests, Profile customer, Profile worker) {
         this.requestId = workRequests.getRequestId();
-        this.workerId = workRequests.getWorkerId();
         this.workDetailsId = workRequests.getWorkDetailsId();
         this.description = workRequests.getDescription();
         this.status = workRequests.getStatus();
 
         this.customer = customer;
+        this.worker = worker;
     }
 
     public WorkRequest() {}
