@@ -62,6 +62,8 @@ public class Customer extends SessionController {
         }
 
         String customerId = sessions.get().getUserId();
+        System.out.println("CUSTOMER RESPONSES (" + customerId + ")");
+        System.out.println(sessions.get().getToken());
         Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
 
         if (customerProfile.isEmpty()) {
