@@ -171,7 +171,7 @@ public class Customer extends SessionController {
                 continue;
             }
 
-            workRequests.add(new WorkRequest());
+            workRequests.add(new WorkRequest(workRequest, customerProfile.get()));
         }
 
         return EndpointResponse.passed(workRequests);
