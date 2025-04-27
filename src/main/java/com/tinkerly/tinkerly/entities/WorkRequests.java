@@ -36,7 +36,7 @@ public class WorkRequests {
     public WorkRequests(WorkRequest workRequest) {
         this.requestId = workRequest.getRequestId();
         this.customerId = workRequest.getCustomer().getUserId();
-        this.workerId = workRequest.getWorkerId();
+        this.workerId = workRequest.getWorker().getUserId();
         this.workDetailsId = workRequest.getWorkDetailsId();
         this.description = workRequest.getDescription();
         this.status = workRequest.getStatus();

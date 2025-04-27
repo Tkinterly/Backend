@@ -136,14 +136,12 @@ public class Work extends SessionController {
 
         WorkRequests workRequests = workRequestQuery.get();
         if (workResponseQuery.isEmpty()) {
-            workRequests.setStatus(2);
+            workRequests.setStatus(1);
             this.workRequestsRepository.save(workRequests);
             return EndpointResponse.passed(true);
         }
 
         WorkResponses workResponses = workResponseQuery.get();
-        workRequests.setStatus(1);
-        this.workRequestsRepository.save(workRequests);
 
         if (workApproval.getIsApproved()) {
             String bookingId = UUID.randomUUID().toString();
@@ -175,12 +173,14 @@ public class Work extends SessionController {
                     workRequests.getDescription()
             );
 
-            workResponses.setStatus(1);
+            this.workResponsesRepository.deleteByWorkRequestId(workRequests.getRequestId());
             this.workBookingsRepository.save(workBookingEntry);
         } else {
-            workResponses.setStatus(2);
+            workResponses.setStatus(1);
             this.workResponsesRepository.save(workResponses);
         }
+
+        this.workRequestsRepository.deleteByRequestId(requestId);
 
         return EndpointResponse.passed(true);
     }
@@ -250,10 +250,12 @@ public class Work extends SessionController {
 
             workBooking.setStatus(2);
         } else {
+            WorkDetails workDetails = workDetailsEntry.get();
             WorkerReviews workerReview = new WorkerReviews(
                     workBooking.getWorkerId(),
                     bookingId,
-                    workDetailsEntry.get().getDomain(),
+                    workDetails.getId(),
+                    workDetails.getDomain(),
                     workCompletion.getReview()
             );
 

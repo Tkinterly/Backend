@@ -21,6 +21,9 @@ public class WorkerReviews {
     private String workBookingId;
 
     @Column(nullable = false)
+    private String workDetailsId;
+
+    @Column(nullable = false)
     private int domain;
 
     @Column(nullable = false)
@@ -28,10 +31,11 @@ public class WorkerReviews {
 
     protected WorkerReviews() {}
 
-    public WorkerReviews(String workerId, String workBookingId, int domain, String review) {
+    public WorkerReviews(String workerId, String workBookingId, String workDetailsId, int domain, String review) {
         this.id = UUID.randomUUID().toString();
         this.workerId = workerId;
         this.workBookingId = workBookingId;
+        this.workDetailsId = workDetailsId;
         this.domain = domain;
         this.review = review;
     }
