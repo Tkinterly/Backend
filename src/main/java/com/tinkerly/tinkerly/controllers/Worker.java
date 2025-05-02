@@ -23,6 +23,7 @@ public class Worker extends SessionController {
     private final WorkerSkillsRepository workerSkillsRepository;
     private final WorkBookingsRepository workBookingsRepository;
     private final WorkerReviewsRepository workerReviewsRepository;
+    private final WorkResponsesRepository workResponsesRepository;
 
     public Worker(
             SessionsRepository sessionsRepository,
@@ -33,7 +34,8 @@ public class Worker extends SessionController {
             WorkDetailsRepository workDetailsRepository,
             WorkerSkillsRepository workerSkillsRepository,
             WorkBookingsRepository workBookingsRepository,
-            WorkerReviewsRepository workerReviewsRepository
+            WorkerReviewsRepository workerReviewsRepository,
+            WorkResponsesRepository workResponsesRepository
     ) {
         super(sessionsRepository, profileGenerator);
         this.workRequestsRepository = workRequestsRepository;
@@ -43,6 +45,7 @@ public class Worker extends SessionController {
         this.workerSkillsRepository  = workerSkillsRepository;
         this.workBookingsRepository = workBookingsRepository;
         this.workerReviewsRepository = workerReviewsRepository;
+        this.workResponsesRepository = workResponsesRepository;
     }
 
     @GetMapping("/worker/{workerId}")
@@ -136,6 +139,36 @@ public class Worker extends SessionController {
         return EndpointResponse.passed(workRequests);
     }
 
+    @GetMapping("/worker/responses")
+    public EndpointResponse<List<WorkResponse>> getWorkResponses() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String workerId = sessions.get().getUserId();
+        Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+
+        if (workerProfile.isEmpty()) {
+            return EndpointResponse.failed("Invalid worker!");
+        }
+
+        List<WorkResponse> workResponses = new ArrayList<>();
+        List<WorkRequests> workRequestEntries = this.workRequestsRepository.findAllByWorkerId(workerId);
+
+        for (WorkRequests workRequest : workRequestEntries) {
+            Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
+
+            if (workResponseQuery.isEmpty()) {
+                continue;
+            }
+
+            workResponses.add(new WorkResponse(workResponseQuery.get()));
+        }
+
+        return EndpointResponse.passed(workResponses);
+    }
+
     @GetMapping("/worker/bookings")
     public EndpointResponse<List<WorkBooking>> getBookings() {
         Optional<Sessions> sessions = this.getSession();
@@ -202,5 +235,42 @@ public class Worker extends SessionController {
         }
 
         return EndpointResponse.passed(workersByCategories);
+    }
+
+    @GetMapping("/worker/history")
+    public EndpointResponse<List<WorkBooking>> getBookingHistory() {
+        Optional<Sessions> sessions = this.getSession();
+        if (sessions.isEmpty() || !this.isValidSession()) {
+            return EndpointResponse.failed("Invalid session!");
+        }
+
+        String workerId = sessions.get().getUserId();
+
+        List<WorkBookings> workBookingEntries = this.workBookingsRepository.findAllByWorkerId(workerId);
+        List<WorkBooking> bookings = new ArrayList<>();
+
+        for (WorkBookings workBookingEntry : workBookingEntries) {
+            if (workBookingEntry.getStatus() < 2) {
+                continue;
+            }
+
+            if (!workDetailsRepository.existsById(workBookingEntry.getWorkDetailsId())) {
+                continue;
+            }
+
+            String customerId = workBookingEntry.getCustomerId();
+            Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
+            Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
+
+            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
+                continue;
+            }
+
+            WorkBooking workBooking = new WorkBooking(workBookingEntry, workerProfile.get(), customerProfile.get());
+
+            bookings.add(workBooking);
+        }
+
+        return EndpointResponse.passed(bookings);
     }
 }
