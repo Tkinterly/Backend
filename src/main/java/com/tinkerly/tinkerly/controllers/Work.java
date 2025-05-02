@@ -114,8 +114,13 @@ public class Work extends SessionController {
             return EndpointResponse.failed("Worker not found!");
         }
 
+        if (workRequest.getStatus() != 0) {
+            return EndpointResponse.failed("Cannot create a response on this request!");
+        }
+
         WorkResponses workResponseEntry = new WorkResponses(workResponse);
         this.workResponsesRepository.save(workResponseEntry);
+        this.workRequestsRepository.delete(workRequest);
 
         return EndpointResponse.passed(workResponse);
     }
