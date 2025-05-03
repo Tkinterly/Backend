@@ -120,35 +120,35 @@ public class Customer extends SessionController {
             workBookings.add(new WorkBooking(workBooking, workerProfile.get(), customerProfile.get()));
         }
 
-        List<WorkRequests> workRequests = this.workRequestsRepository.findAllByCustomerId(customerId);
+//        List<WorkRequests> workRequests = this.workRequestsRepository.findAllByCustomerId(customerId);
 
-        for (WorkRequests workRequest : workRequests) {
-            Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workRequest.getWorkDetailsId());
-            Profile workerProfile = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId()).orElse(null);
-            Profile customerProfile = this.profileGenerator.getCustomerProfile(customerId).orElse(null);
-            Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
-
-            if (workResponseQuery.isEmpty() || workDetailsQuery.isEmpty() || customerProfile == null || workerProfile == null) {
-                continue;
-            }
-
-            String bookingId = workRequest.getRequestId();
-            WorkResponses workResponse = workResponseQuery.get();
-
-            WorkBooking workBooking = new WorkBooking(
-                    bookingId,
-                    workRequest.getWorkDetailsId(),
-                    workResponse.getCost(),
-                    workerProfile,
-                    customerProfile,
-                    workResponse.getStartDate(),
-                    workResponse.getEndDate(),
-                    0,
-                    workRequest.getDescription()
-            );
-
-            workBookings.add(workBooking);
-        }
+//        for (WorkRequests workRequest : workRequests) {
+//            Optional<WorkDetails> workDetailsQuery = this.workDetailsRepository.findById(workRequest.getWorkDetailsId());
+//            Profile workerProfile = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId()).orElse(null);
+//            Profile customerProfile = this.profileGenerator.getCustomerProfile(customerId).orElse(null);
+//            Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
+//
+//            if (workResponseQuery.isEmpty() || workDetailsQuery.isEmpty() || customerProfile == null || workerProfile == null) {
+//                continue;
+//            }
+//
+//            String bookingId = workRequest.getRequestId();
+//            WorkResponses workResponse = workResponseQuery.get();
+//
+//            WorkBooking workBooking = new WorkBooking(
+//                    bookingId,
+//                    workRequest.getWorkDetailsId(),
+//                    workResponse.getCost(),
+//                    workerProfile,
+//                    customerProfile,
+//                    workResponse.getStartDate(),
+//                    workResponse.getEndDate(),
+//                    0,
+//                    workRequest.getDescription()
+//            );
+//
+//            workBookings.add(workBooking);
+//        }
 
         return EndpointResponse.passed(workBookings);
     }
