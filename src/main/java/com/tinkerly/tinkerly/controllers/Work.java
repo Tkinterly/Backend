@@ -182,13 +182,13 @@ public class Work extends SessionController {
             );
 
             this.workResponsesRepository.delete(workResponses);
+            this.workRequestsRepository.delete(workRequests);
             this.workBookingsRepository.save(workBookingEntry);
         } else {
             workResponses.setStatus(1);
             this.workResponsesRepository.save(workResponses);
         }
 
-        this.workRequestsRepository.delete(workRequests);
 
         return EndpointResponse.passed(true);
     }
