@@ -163,7 +163,9 @@ public class Worker extends SessionController {
                 continue;
             }
 
-            workResponses.add(new WorkResponse(workResponseQuery.get(), customerProfile.get(), workerProfile.get()));
+            WorkRequest workRequestDTO = new WorkRequest(workRequest, workerProfile.get(), customerProfile.get());
+
+            workResponses.add(new WorkResponse(workResponseQuery.get(), workRequestDTO));
         }
 
         return EndpointResponse.passed(workResponses);
