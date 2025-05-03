@@ -119,7 +119,6 @@ public class Worker extends SessionController {
         }
 
         String workerId = sessions.get().getUserId();
-
         if (!this.workerProfileRepository.existsByUserId(workerId)) {
             return EndpointResponse.failed("Invalid worker!");
         }
@@ -130,9 +129,10 @@ public class Worker extends SessionController {
         for (WorkRequests workRequest : workRequestsQuery) {
             Optional<Profile> customer = this.profileGenerator.getCustomerProfile(workRequest.getCustomerId());
             Optional<Profile> worker = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId());
-            if (customer.isEmpty() || worker.isEmpty()) {
+            if (customer.isEmpty() || worker.isEmpty() || workRequest.getStatus() > 1) {
                 continue;
             }
+
             workRequests.add(new WorkRequest(workRequest, customer.get(), worker.get()));
         }
 
@@ -158,7 +158,6 @@ public class Worker extends SessionController {
 
         for (WorkRequests workRequest : workRequestEntries) {
             Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
-
             if (workResponseQuery.isEmpty()) {
                 continue;
             }

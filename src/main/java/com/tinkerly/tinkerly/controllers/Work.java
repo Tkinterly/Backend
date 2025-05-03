@@ -120,7 +120,9 @@ public class Work extends SessionController {
 
         WorkResponses workResponseEntry = new WorkResponses(workResponse);
         this.workResponsesRepository.save(workResponseEntry);
-        this.workRequestsRepository.delete(workRequest);
+
+        workRequest.setStatus(2);
+        this.workRequestsRepository.save(workRequest);
 
         return EndpointResponse.passed(workResponse);
     }
@@ -142,6 +144,7 @@ public class Work extends SessionController {
         WorkRequests workRequests = workRequestQuery.get();
         if (workResponseQuery.isEmpty()) {
             workRequests.setStatus(1);
+
             this.workRequestsRepository.save(workRequests);
             return EndpointResponse.passed(true);
         }
@@ -178,14 +181,14 @@ public class Work extends SessionController {
                     workRequests.getDescription()
             );
 
-            this.workResponsesRepository.deleteByWorkRequestId(workRequests.getRequestId());
+            this.workResponsesRepository.delete(workResponses);
             this.workBookingsRepository.save(workBookingEntry);
         } else {
             workResponses.setStatus(1);
             this.workResponsesRepository.save(workResponses);
         }
 
-        this.workRequestsRepository.deleteByRequestId(requestId);
+        this.workRequestsRepository.delete(workRequests);
 
         return EndpointResponse.passed(true);
     }

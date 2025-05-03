@@ -169,7 +169,7 @@ public class Customer extends SessionController {
             String workerId = workRequest.getWorkerId();
             Optional<Profile> workerProfile = this.profileGenerator.getWorkerProfile(workerId);
             Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
-            if (workerProfile.isEmpty() || customerProfile.isEmpty()) {
+            if (workerProfile.isEmpty() || customerProfile.isEmpty() || workRequest.getStatus() > 1) {
                 continue;
             }
 
