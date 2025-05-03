@@ -163,7 +163,7 @@ public class Worker extends SessionController {
                 continue;
             }
 
-            WorkRequest workRequestDTO = new WorkRequest(workRequest, workerProfile.get(), customerProfile.get());
+            WorkRequest workRequestDTO = new WorkRequest(workRequest, customerProfile.get(), workerProfile.get());
 
             workResponses.add(new WorkResponse(workResponseQuery.get(), workRequestDTO));
         }
