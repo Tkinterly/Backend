@@ -64,9 +64,9 @@ public class Customer extends SessionController {
         String customerId = sessions.get().getUserId();
         System.out.println("CUSTOMER RESPONSES (" + customerId + ")");
         System.out.println(sessions.get().getToken());
-        Optional<Profile> customerProfile = this.profileGenerator.getCustomerProfile(customerId);
+        Optional<Profile> customerProfileQuery = this.profileGenerator.getCustomerProfile(customerId);
 
-        if (customerProfile.isEmpty()) {
+        if (customerProfileQuery.isEmpty()) {
             return EndpointResponse.failed("Invalid customer!");
         }
 
@@ -75,12 +75,13 @@ public class Customer extends SessionController {
 
         for (WorkRequests workRequest : workRequestEntries) {
             Optional<WorkResponses> workResponseQuery = this.workResponsesRepository.findByWorkRequestId(workRequest.getRequestId());
+            Optional<Profile> workerProfileQuery = this.profileGenerator.getWorkerProfile(workRequest.getWorkerId());
 
-            if (workResponseQuery.isEmpty()) {
+            if (workResponseQuery.isEmpty() || workerProfileQuery.isEmpty()) {
                 continue;
             }
 
-            workResponses.add(new WorkResponse(workResponseQuery.get()));
+            workResponses.add(new WorkResponse(workResponseQuery.get(), customerProfileQuery.get(), workerProfileQuery.get()));
         }
 
         return EndpointResponse.passed(workResponses);
